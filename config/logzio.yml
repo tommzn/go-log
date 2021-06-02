@@ -1,0 +1,10 @@
+log:
+  loglevel: debug
+  shipper: logzio
+  logzio:
+    url: https://example.com/
+    batchsize: 12
+    shipmentstacksize: 3
+    messagestacksize: 123
+    shipmenttimeout: 7
+    messagereadtimeout: 14

@@ -1,0 +1,7 @@
+general:
+  log:
+    batchsize: 5
+log:
+  batchsize: 5
+  loglevel: debug
+  namespace: log-test
