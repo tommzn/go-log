@@ -25,9 +25,9 @@ func newLogzioJsonFormatter() LogFormatter {
 func (formatter *LogzioJsonFormatter) format(logLevel LogLevel, logContext LogContext, message string) string {
 
 	ctxValues := logContext.values
-	ctxValues[LogCtx_LogLevel] = logLevel.String()
+	ctxValues[LogCtxLogLevel] = logLevel.String()
 	ctxValues["@timestamp"] = time.Now().UTC().Format(LOGZIO_TIMESTAMP_FORMAT)
-	ctxValues[LogCtx_Message] = message
+	ctxValues[LogCtxMessage] = message
 
 	// Since we marshal string values only here, we'll omit the error
 	logContent, _ := json.Marshal(ctxValues)

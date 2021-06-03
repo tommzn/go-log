@@ -41,7 +41,7 @@ func (suite *FomatterTestSuite) TestLogzioJsonFormatter() {
 
 func (suite *FomatterTestSuite) contextForTest() LogContext {
 	logContext := make(map[string]string)
-	logContext[LogCtx_Timestamp] = "2021-05-30T12:08:47+02:00"
-	logContext[LogCtx_Namespace] = "FomatterTestSuite"
+	logContext[LogCtxTimestamp] = "2021-05-30T12:08:47+02:00"
+	logContext[LogCtxNamespace] = "FomatterTestSuite"
 	return LogContext{values: logContext}
 }

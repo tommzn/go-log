@@ -21,26 +21,26 @@ const (
 )
 
 const (
-	// LogCtx_RequestId is a context key used for a request id.
-	LogCtx_RequestId = "requestid"
-	// LogCtx_LogLevel is a context key for used log level.
-	LogCtx_LogLevel = "loglevel"
-	// LogCtx_Message is a context key for log messages.
-	LogCtx_Message = "message"
-	// LogCtx_Timestamp is a context key for a timestamp.
-	LogCtx_Timestamp = "timestamp"
-	// LogCtx_Namespace is a context key for a namespace.
-	LogCtx_Namespace = "namespace"
-	// LogCtx_Domain is a context key for a domain.
-	LogCtx_Domain = "domain"
-	// LogCtx_Hostname is a context keyfor a hostname.
-	LogCtx_Hostname = "hostname"
-	// LogCtx_Ip is a context key for an Ip (v4).
-	LogCtx_Ip = "ip"
-	// LogCtx_K8s_Node is a context key for kubernetes node name.
-	LogCtx_K8s_Node = "k8s_node"
-	// LogCtx_K8s_Pod is a context key for a kubernetes pod name.
-	LogCtx_K8s_Pod = "k8s_pod"
+	// LogCtxRequestId is a context key used for a request id.
+	LogCtxRequestId = "requestid"
+	// LogCtxLogLevel is a context key for used log level.
+	LogCtxLogLevel = "loglevel"
+	// LogCtxMessage is a context key for log messages.
+	LogCtxMessage = "message"
+	// LogCtxTimestamp is a context key for a timestamp.
+	LogCtxTimestamp = "timestamp"
+	// LogCtxNamespace is a context key for a namespace.
+	LogCtxNamespace = "namespace"
+	// LogCtxDomain is a context key for a domain.
+	LogCtxDomain = "domain"
+	// LogCtxHostname is a context keyfor a hostname.
+	LogCtxHostname = "hostname"
+	// LogCtxIp is a context key for an Ip (v4).
+	LogCtxIp = "ip"
+	// LogCtxK8sNode is a context key for kubernetes node name.
+	LogCtxK8sNode = "k8s_node"
+	// LogCtxK8sPod is a context key for a kubernetes pod name.
+	LogCtxK8sPod = "k8s_pod"
 )
 
 // LogContext provides context values for logging.

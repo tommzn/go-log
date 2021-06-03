@@ -64,9 +64,9 @@ func (suite *ContextTestSuite) TestDefaultContextForNodes() {
 
 	logContext := DefaultContextForNodes()
 	suite.Len(logContext.values, 2)
-	_, ok1 := logContext.values[LogCtx_Hostname]
+	_, ok1 := logContext.values[LogCtxHostname]
 	suite.True(ok1)
-	_, ok2 := logContext.values[LogCtx_Ip]
+	_, ok2 := logContext.values[LogCtxIp]
 	suite.True(ok2)
 }
 
@@ -77,9 +77,9 @@ func (suite *ContextTestSuite) TestDefaultContextForK8s() {
 
 	logContext := DefaultContextForK8s()
 	suite.Len(logContext.values, 2)
-	_, ok1 := logContext.values[LogCtx_K8s_Node]
+	_, ok1 := logContext.values[LogCtxK8sNode]
 	suite.True(ok1)
-	_, ok2 := logContext.values[LogCtx_K8s_Pod]
+	_, ok2 := logContext.values[LogCtxK8sPod]
 	suite.True(ok2)
 
 	os.Unsetenv("K8S_NODE_NAME")

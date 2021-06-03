@@ -63,11 +63,11 @@ func DefaultContextForNodes() LogContext {
 
 	values := make(map[string]string)
 	host, _ := os.Hostname()
-	values[LogCtx_Hostname] = host
+	values[LogCtxHostname] = host
 	addrs, _ := net.LookupIP(host)
 	for _, addr := range addrs {
 		if ipv4 := addr.To4(); ipv4 != nil {
-			values[LogCtx_Ip] = ipv4.String()
+			values[LogCtxIp] = ipv4.String()
 		}
 	}
 	return newLogContext(values)
@@ -79,10 +79,10 @@ func DefaultContextForK8s() LogContext {
 
 	values := make(map[string]string)
 	if node, ok := os.LookupEnv("K8S_NODE_NAME"); ok {
-		values[LogCtx_K8s_Node] = node
+		values[LogCtxK8sNode] = node
 	}
 	if pod, ok := os.LookupEnv("K8S_POD_NAME"); ok {
-		values[LogCtx_K8s_Pod] = pod
+		values[LogCtxK8sPod] = pod
 	}
 	return newLogContext(values)
 }
