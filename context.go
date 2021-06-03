@@ -9,8 +9,13 @@ import (
 	"strings"
 )
 
-// LOG_CONTEXT_KEY is used to set and get context values.
-const LOG_CONTEXT_KEY = "log-context"
+// contextKey is a type for context keys.
+type contextKey int
+
+const (
+	// logContextKey is used to set and get context values.
+	logContextKey contextKey = iota
+)
 
 // newLogContext returns a new log context with passed key/value pairs.
 func newLogContext(values map[string]string) LogContext {
@@ -21,17 +26,17 @@ func newLogContext(values map[string]string) LogContext {
 func LogContextWithValues(ctx context.Context, values map[string]string) context.Context {
 
 	logContext := newLogContext(values)
-	if currentLogContext, ok := ctx.Value(LOG_CONTEXT_KEY).(LogContext); ok {
+	if currentLogContext, ok := ctx.Value(logContextKey).(LogContext); ok {
 		logContext = logContext.AppendValues(currentLogContext.values)
 	}
-	return context.WithValue(ctx, LOG_CONTEXT_KEY, logContext)
+	return context.WithValue(ctx, logContextKey, logContext)
 }
 
 // getLogContext will extract log context from passed context.
 // If there's no log context it will return an empty one.
 func getLogContext(ctx context.Context) LogContext {
 
-	if logContext, ok := ctx.Value(LOG_CONTEXT_KEY).(LogContext); ok {
+	if logContext, ok := ctx.Value(logContextKey).(LogContext); ok {
 		return logContext
 	}
 	return newLogContext(make(map[string]string))

@@ -27,14 +27,14 @@ func (suite *ContextTestSuite) TestLogContextWithValues() {
 
 	ctx := LogContextWithValues(context.Background(), suite.contextValuesForTest())
 	suite.Implements((*context.Context)(nil), ctx)
-	logContext, ok := ctx.Value(LOG_CONTEXT_KEY).(LogContext)
+	logContext, ok := ctx.Value(logContextKey).(LogContext)
 	suite.True(ok)
 	suite.Len(logContext.values, 2)
 
 	additionalContextValues := make(map[string]string)
 	additionalContextValues["Key3"] = "Value3"
 	ctx2 := LogContextWithValues(ctx, additionalContextValues)
-	logContext2, ok2 := ctx2.Value(LOG_CONTEXT_KEY).(LogContext)
+	logContext2, ok2 := ctx2.Value(logContextKey).(LogContext)
 	suite.True(ok2)
 	suite.Len(logContext2.values, 3)
 }
