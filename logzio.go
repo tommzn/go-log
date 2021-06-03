@@ -187,15 +187,17 @@ func (shipper *LogzioShipper) sendRequest(request *http.Request) {
 	}
 }
 
+// logError writes given error to STDERR.
 func (shipper *LogzioShipper) logError(err error) {
 	syslog.Println(err)
 }
 
+// logzIoUrl generates the Logz.io endpoint for importing logs.
 func (shipper *LogzioShipper) logzIoUrl() string {
-	if token, err := shipper.secretsManager.Obtain(LOGZIO_TOKEN_KEY); err == nil {
-		return fmt.Sprintf("%s?token=%s&type=go-logs", shipper.logzioUrl, *token)
-	} else {
+	token, err := shipper.secretsManager.Obtain(LOGZIO_TOKEN_KEY)
+	if err != nil {
 		shipper.logError(err)
 		return fmt.Sprintf("%s?token=%s&type=go-logs", shipper.logzioUrl, "<LogzioTokenNotFound>")
 	}
+	return fmt.Sprintf("%s?token=%s&type=go-logs", shipper.logzioUrl, *token)
 }

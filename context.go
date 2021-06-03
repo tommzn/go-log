@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-// LOG_CONTEXT_KEX is used to set and get context values.
+// LOG_CONTEXT_KEY is used to set and get context values.
 const LOG_CONTEXT_KEY = "log-context"
 
 // newLogContext returns a new log context with passed key/value pairs.
@@ -33,9 +33,8 @@ func getLogContext(ctx context.Context) LogContext {
 
 	if logContext, ok := ctx.Value(LOG_CONTEXT_KEY).(LogContext); ok {
 		return logContext
-	} else {
-		return newLogContext(make(map[string]string))
 	}
+	return newLogContext(make(map[string]string))
 }
 
 // AppendValues reads values from current log context, append passed values and returns a new log context.

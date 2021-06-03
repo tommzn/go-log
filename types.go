@@ -6,34 +6,42 @@ import (
 	secrets "github.com/tommzn/go-secrets"
 )
 
+// LogLevel defines the log level, e.g. error or debug.
 type LogLevel int
 
 const (
+	// None diables logging.
 	None LogLevel = iota * 100
+	// Error is a log level for errors.
 	Error
+	// Info is a log level for status information.
 	Info
+	// Debug is a log level for dev outputs.
 	Debug
 )
 
 const (
+	// LogCtx_RequestId is a context key used for a request id.
 	LogCtx_RequestId = "requestid"
-	LogCtx_LogLevel  = "loglevel"
-	LogCtx_Message   = "message"
+	// LogCtx_LogLevel is a context key for used log level.
+	LogCtx_LogLevel = "loglevel"
+	// LogCtx_Message is a context key for log messages.
+	LogCtx_Message = "message"
+	// LogCtx_Timestamp is a context key for a timestamp.
 	LogCtx_Timestamp = "timestamp"
+	// LogCtx_Namespace is a context key for a namespace.
 	LogCtx_Namespace = "namespace"
-	LogCtx_Domain    = "domain"
-	LogCtx_Hostname  = "hostname"
-	LogCtx_Ip        = "ip"
-	LogCtx_K8s_Node  = "k8s_node"
-	LogCtx_K8s_Pod   = "k8s_pod"
+	// LogCtx_Domain is a context key for a domain.
+	LogCtx_Domain = "domain"
+	// LogCtx_Hostname is a context keyfor a hostname.
+	LogCtx_Hostname = "hostname"
+	// LogCtx_Ip is a context key for an Ip (v4).
+	LogCtx_Ip = "ip"
+	// LogCtx_K8s_Node is a context key for kubernetes node name.
+	LogCtx_K8s_Node = "k8s_node"
+	// LogCtx_K8s_Pod is a context key for a kubernetes pod name.
+	LogCtx_K8s_Pod = "k8s_pod"
 )
-
-var logPrefix map[LogLevel]string
-
-type LogMessage struct {
-	Level   LogLevel
-	Message string
-}
 
 // LogContext provides context values for logging.
 type LogContext struct {
