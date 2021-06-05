@@ -22,6 +22,11 @@ func newLogContext(values map[string]string) LogContext {
 	return LogContext{values: values}
 }
 
+// newEmptyLogContext returns a new log context with an empty values map.
+func newEmptyLogContext() LogContext {
+	return LogContext{values: make(map[string]string)}
+}
+
 // LogContextWithValues adds passed log values to passed context.
 func LogContextWithValues(ctx context.Context, values map[string]string) context.Context {
 

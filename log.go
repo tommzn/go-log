@@ -35,6 +35,7 @@ func NewLoggerFromConfig(conf config.Config, secretsManager secrets.SecretsManag
 
 	shipperType := conf.Get("log.shipper", nil)
 	if shipperType != nil && strings.ToLower(*shipperType) == "logzio" {
+		formatter = newLogzioJsonFormatter()
 		shipper = newLogzioShipper(conf, secretsManager)
 	} else {
 		formatter = newDefaultFormatter()
@@ -48,7 +49,7 @@ func NewLoggerFromConfig(conf config.Config, secretsManager secrets.SecretsManag
 	}
 	return &LogHandler{
 		logLevel:  logLevel,
-		context:   LogContext{},
+		context:   newEmptyLogContext(),
 		formatter: formatter,
 		shipper:   shipper,
 	}

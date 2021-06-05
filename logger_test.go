@@ -29,16 +29,19 @@ func (suite *LoggerTestSuite) TestCreateLoggerFromConfig() {
 	logger1 := NewLoggerFromConfig(conf1, secrets.NewSecretsManager())
 	suite.IsType(&LogzioShipper{}, logger1.(*LogHandler).shipper)
 	suite.Equal(Debug, logger1.(*LogHandler).logLevel)
+	logger1.Error("Test Log")
 
 	conf2 := loadConfigFromFile("config/stdout.yml")
 	logger2 := NewLoggerFromConfig(conf2, nil)
 	suite.IsType(&StdoutShipper{}, logger2.(*LogHandler).shipper)
 	suite.Equal(Info, logger2.(*LogHandler).logLevel)
+	logger2.Error("Test Log")
 
 	conf3 := loadConfigFromFile("config/empty.yml")
 	logger3 := NewLoggerFromConfig(conf3, nil)
 	suite.IsType(&StdoutShipper{}, logger3.(*LogHandler).shipper)
 	suite.Equal(Error, logger3.(*LogHandler).logLevel)
+	logger3.Error("Test Log")
 }
 
 func (suite *LoggerTestSuite) TestLogging() {
