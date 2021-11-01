@@ -32,6 +32,16 @@ func (logger *LogHandler) WithContext(ctx context.Context) {
 	logger.context = getLogContext(ctx)
 }
 
+// Statusf format given log message for log level Status.
+func (logger *LogHandler) Statusf(message string, v ...interface{}) {
+	logger.logf(Status, message, v...)
+}
+
+// Status will create a log message with given values for log level Status.
+func (logger *LogHandler) Status(v ...interface{}) {
+	logger.log(Status, v...)
+}
+
 // Errorf format given log message for log level Error.
 func (logger *LogHandler) Errorf(message string, v ...interface{}) {
 	logger.logf(Error, message, v...)

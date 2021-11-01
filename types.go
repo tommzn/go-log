@@ -12,6 +12,8 @@ type LogLevel int
 const (
 	// None diables logging.
 	None LogLevel = iota * 100
+	// Status can be used to log messages.
+	Status
 	// Error is a log level for errors.
 	Error
 	// Info is a log level for status information.

@@ -15,6 +15,7 @@ var logLevelNames map[LogLevel]string
 func init() {
 	logLevelNames = make(map[LogLevel]string)
 	logLevelNames[None] = "None"
+	logLevelNames[Status] = "Status"
 	logLevelNames[Error] = "Error"
 	logLevelNames[Info] = "Info"
 	logLevelNames[Debug] = "Debug"
@@ -31,6 +32,8 @@ func (logLevel LogLevel) String() string {
 func LogLevelByName(logLevelName string) LogLevel {
 
 	switch strings.ToLower(logLevelName) {
+	case "status":
+		return Status
 	case "error":
 		return Error
 	case "info":

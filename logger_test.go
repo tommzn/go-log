@@ -50,6 +50,10 @@ func (suite *LoggerTestSuite) TestLogging() {
 	logger := NewLogger(Debug, nil, shipper)
 
 	expectedNumberOfLogMessages := 1
+	logger.Status("This ", "is ", "a ", "test.")
+	suite.assertLogMessage(expectedNumberOfLogMessages, "Status: This is a test., Context: ", shipper)
+
+	expectedNumberOfLogMessages++
 	logger.Error("This ", "is ", "a ", "test.")
 	suite.assertLogMessage(expectedNumberOfLogMessages, "Error: This is a test., Context: ", shipper)
 
@@ -60,6 +64,10 @@ func (suite *LoggerTestSuite) TestLogging() {
 	expectedNumberOfLogMessages++
 	logger.Debug("This ", "is ", "a ", "test.")
 	suite.assertLogMessage(expectedNumberOfLogMessages, "Debug: This is a test., Context: ", shipper)
+
+	expectedNumberOfLogMessages++
+	logger.Statusf("This is the %dst test.", 1)
+	suite.assertLogMessage(expectedNumberOfLogMessages, "Status: This is the 1st test., Context: ", shipper)
 
 	expectedNumberOfLogMessages++
 	logger.Errorf("This is the %dst test.", 1)

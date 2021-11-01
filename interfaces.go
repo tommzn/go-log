@@ -11,6 +11,12 @@ type Logger interface {
 	// WithContext sets a given log context.
 	WithContext(context.Context)
 
+	// Statusf logs a formated message with log level Status.
+	Statusf(message string, v ...interface{})
+
+	// Status logs given message with log level Status.
+	Status(v ...interface{})
+
 	// Errorf logs a formated message with log level Error.
 	Errorf(message string, v ...interface{})
 
