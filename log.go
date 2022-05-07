@@ -20,7 +20,7 @@ func NewLogger(logLevel LogLevel, formatter LogFormatter, shipper LogShipper) Lo
 	}
 	return &LogHandler{
 		logLevel:  logLevel,
-		context:   LogContext{},
+		context:   newEmptyLogContext(),
 		formatter: formatter,
 		shipper:   shipper,
 	}

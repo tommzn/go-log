@@ -1,52 +1,37 @@
 package log
 
-/**
-func NewLogger(logLevel LogLevel, namespace string) Logger {
-	return &DefaultLogger{
-		logLevel:  logLevel,
-		namespace: namespace,
-		context:   make(map[string]string),
-		logClient: log.New(os.Stdout, "", 0),
+import (
+	"context"
+	"os"
+)
+
+// WithNameSpace appends passed namespace as log context
+func WithNameSpace(logger Logger, namespace string) Logger {
+	return appendContextValues(logger, map[string]string{LogCtxNamespace: namespace})
+}
+
+// WithK8sContext appends kubernetes values from environment variables as context
+// At the moment following environment variables are supported:
+//	K8S_NODE_NAME 	- Node name
+//	K8S_POD_NAME	- Pod name
+func WithK8sContext(logger Logger) Logger {
+
+	logContextValues := make(map[string]string)
+	if node, ok := os.LookupEnv("K8S_NODE_NAME"); ok {
+		logContextValues[LogCtxK8sNode] = node
 	}
-}
-
-func NewLoggerFromConfig(conf config.Config, secretsMenager secrets.SecretsManager) Logger {
-
-	loggerType := conf.Get("log.type", config.AsStringPtr("logzio"))
-	if *loggerType == "logzio" {
-		return NewLogzIoLogger(conf, secretsMenager)
-	} else {
-		logLevelName := conf.Get("log.loglevel", config.AsStringPtr(DEFAULT_LOGLEVEL))
-		logLevel := LogLevelByName(*logLevelName)
-		namespace := conf.Get("log.namespace", config.AsStringPtr(DEFAULT_NAMESPACE))
-		return &DefaultLogger{
-			logLevel:  logLevel,
-			namespace: *namespace,
-			context:   make(map[string]string),
-			logClient: log.New(os.Stdout, "", 0),
-		}
+	if pod, ok := os.LookupEnv("K8S_POD_NAME"); ok {
+		logContextValues[LogCtxK8sPod] = pod
 	}
+	return appendContextValues(logger, logContextValues)
 }
 
-func NewLoggerByLogLevelName(logLevelName, namespace string) Logger {
-	return NewLogger(LogLevelByName(logLevelName), namespace)
-}
-*/
-
-/**
-// appendLineBreakIfNecessary adds a line break to given log message
-// if it does not end with one at the moment.
-func appendLineBreakIfNecessary(logMessage string) string {
-	if !strings.HasSuffix(logMessage, "\n") {
-		logMessage += "\n"
+// WithNameSpace appends passed passed values to log context
+func appendContextValues(logger Logger, values map[string]string) Logger {
+	if logHandler, ok := logger.(*LogHandler); ok {
+		logHandler.context.AppendValues(values)
+		return logHandler
 	}
-	return logMessage
+	logger.WithContext(LogContextWithValues(context.Background(), values))
+	return logger
 }
-*/
-
-/**
-// logTimeStamp returns a log timestamp in format: "2006-01-02 15:04:05.000000"
-func logTimeStamp() string {
-	return time.Now().Format("2006-01-02 15:04:05.000000")
-}
-*/
