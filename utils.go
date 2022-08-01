@@ -1,7 +1,6 @@
 package log
 
 import (
-	"context"
 	"os"
 )
 
@@ -30,8 +29,6 @@ func WithK8sContext(logger Logger) Logger {
 func appendContextValues(logger Logger, values map[string]string) Logger {
 	if logHandler, ok := logger.(*LogHandler); ok {
 		logHandler.context.AppendValues(values)
-		return logHandler
 	}
-	logger.WithContext(LogContextWithValues(context.Background(), values))
 	return logger
 }
