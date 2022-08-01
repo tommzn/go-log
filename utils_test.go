@@ -41,3 +41,15 @@ func (suite *UtilsTestSuite) TestKubernetesLogContext() {
 	suite.True(ok2)
 	suite.Len(logHandler2.context.values, 2)
 }
+
+func (suite *UtilsTestSuite) TestAppendContextValues() {
+
+	logger := NewLogger(Debug, nil, nil)
+	context := make(map[string]string)
+	context["test"] = "val1"
+	logger = appendContextValues(logger, context)
+
+	logHandler, ok := logger.(*LogHandler)
+	suite.True(ok)
+	suite.Equal("test:val1", logHandler.context.String())
+}
