@@ -29,13 +29,32 @@ func (suite *LogLevelTestSuite) TestGetLogLevelByName() {
 	suite.Equal(Error, LogLevelByName("Error"))
 	suite.Equal(Info, LogLevelByName("info"))
 	suite.Equal(Debug, LogLevelByName("DeBuG"))
+	suite.Equal(Status, LogLevelByName("Status"))
 	suite.Equal(None, LogLevelByName("XXX"))
 }
 
 func (suite *LogLevelTestSuite) TestLogLevelFromEnv() {
 
+	conf := loadConfigFromFile("config/testconfig.yml")
+	suite.Equal(Debug, LogLevelFromConfig(conf))
+
+	conf = loadConfigFromFile("config/empty.yml")
+	suite.Equal(Error, LogLevelFromConfig(conf))
+}
+
+func (suite *LogLevelTestSuite) TestLogLevelFromConfig() {
+
 	os.Setenv(ENV_LOGLEVEL, "info")
 	suite.Equal(Info, LogLevelFromEnv())
 
 	os.Unsetenv(ENV_LOGLEVEL)
+}
+
+func (suite *LogLevelTestSuite) TestSyslogLevel() {
+
+	suite.Equal(0, None.SyslogLevel())
+	suite.Equal(0, Status.SyslogLevel())
+	suite.Equal(3, Error.SyslogLevel())
+	suite.Equal(6, Info.SyslogLevel())
+	suite.Equal(7, Debug.SyslogLevel())
 }
