@@ -3,6 +3,8 @@ package log
 import (
 	"os"
 	"strings"
+
+	config "github.com/tommzn/go-config"
 )
 
 // ENV_LOGLEVEL defines the environment variable which can be used to set a log level.
@@ -24,6 +26,21 @@ func init() {
 // String returns the name of a log level.
 func (logLevel LogLevel) String() string {
 	return logLevelNames[logLevel]
+}
+
+// SyslogLevel returns corresponding syslog(3) log level.
+func (logLevel LogLevel) SyslogLevel() int {
+
+	switch logLevel {
+	case Error:
+		return 3 // LOG_ERR
+	case Info:
+		return 6 // LOG_INFO
+	case Debug:
+		return 7 // LOG_DEBUG
+	default:
+		return 0 // LOG_EMERG
+	}
 }
 
 // LogLevelByName will try to convert passed name of a log level
@@ -49,4 +66,13 @@ func LogLevelByName(logLevelName string) LogLevel {
 // it exists call LogLevelByName to convert it's value to a log level.
 func LogLevelFromEnv() LogLevel {
 	return LogLevelByName(os.Getenv(ENV_LOGLEVEL))
+}
+
+// LogLevelFromConfig reads log level from config using "log.loglevel" as key.
+// If there's no log level defined in passed config default Error will be returned.
+func LogLevelFromConfig(conf config.Config) LogLevel {
+	if logLevelName := conf.Get("log.loglevel", nil); logLevelName != nil {
+		return LogLevelByName(*logLevelName)
+	}
+	return Error
 }
