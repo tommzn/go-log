@@ -29,7 +29,6 @@ func NewLogger(logLevel LogLevel, formatter LogFormatter, shipper LogShipper) Lo
 // NewLoggerFromConfig returns a new logger created depending on passed config.
 func NewLoggerFromConfig(conf config.Config, secretsManager secrets.SecretsManager) Logger {
 
-	var logLevel LogLevel
 	var formatter LogFormatter
 	var shipper LogShipper
 
@@ -42,13 +41,8 @@ func NewLoggerFromConfig(conf config.Config, secretsManager secrets.SecretsManag
 		shipper = newStdoutShipper()
 	}
 
-	if logLevelName := conf.Get("log.loglevel", nil); logLevelName != nil {
-		logLevel = LogLevelByName(*logLevelName)
-	} else {
-		logLevel = Error
-	}
 	return &LogHandler{
-		logLevel:  logLevel,
+		logLevel:  LogLevelFromConfig(conf),
 		context:   newEmptyLogContext(),
 		formatter: formatter,
 		shipper:   shipper,
