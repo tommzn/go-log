@@ -22,7 +22,6 @@ func (suite *FomatterTestSuite) TestDefaultFormatter() {
 	context := suite.contextForTest()
 	message := "Test Message"
 	expextedLogMessage := "Error: Test Message, Context: namespace:FomatterTestSuite,timestamp:2021-05-30T12:08:47+02:00"
-
 	suite.Equal(expextedLogMessage, formatter.format(logLevel, context, message))
 }
 
