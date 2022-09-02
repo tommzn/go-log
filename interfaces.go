@@ -35,6 +35,12 @@ type Logger interface {
 	// Error logs given message with log level Debug.
 	Debug(v ...interface{})
 
+	// Logs a formated message with given log level.
+	Logf(logLevel LogLevel, message string, v ...interface{})
+
+	// Logs passed message with given log level.
+	Log(logLevel LogLevel, v ...interface{})
+
 	// FLush tells the log shipper to cleat it's internal message queue.
 	Flush()
 }

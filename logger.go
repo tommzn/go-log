@@ -72,6 +72,16 @@ func (logger *LogHandler) Debug(v ...interface{}) {
 	logger.log(Debug, v...)
 }
 
+// Log passed log message with given log level.
+func (logger *LogHandler) Logf(logLevel LogLevel, message string, v ...interface{}) {
+	logger.logf(logLevel, message, v...)
+}
+
+// Log passed log message with given log level.
+func (logger *LogHandler) Log(logLevel LogLevel, v ...interface{}) {
+	logger.log(logLevel, v...)
+}
+
 // Flush will force it's log shipper to deliver all remaining log messages.
 func (logger *LogHandler) Flush() {
 	logger.shipper.flush()
