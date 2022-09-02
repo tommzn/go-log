@@ -47,7 +47,7 @@ func (suite *UtilsTestSuite) TestAppendContextValues() {
 	logger := NewLogger(Debug, nil, nil)
 	context := make(map[string]string)
 	context["test"] = "val1"
-	logger = appendContextValues(logger, context)
+	logger = AppendContextValues(logger, context)
 
 	logHandler, ok := logger.(*LogHandler)
 	suite.True(ok)

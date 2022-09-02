@@ -6,7 +6,7 @@ import (
 
 // WithNameSpace appends passed namespace as log context
 func WithNameSpace(logger Logger, namespace string) Logger {
-	return appendContextValues(logger, map[string]string{LogCtxNamespace: namespace})
+	return AppendContextValues(logger, map[string]string{LogCtxNamespace: namespace})
 }
 
 // WithK8sContext appends kubernetes values from environment variables as context
@@ -22,11 +22,11 @@ func WithK8sContext(logger Logger) Logger {
 	if pod, ok := os.LookupEnv("K8S_POD_NAME"); ok {
 		logContextValues[LogCtxK8sPod] = pod
 	}
-	return appendContextValues(logger, logContextValues)
+	return AppendContextValues(logger, logContextValues)
 }
 
-// WithNameSpace appends passed passed values to log context
-func appendContextValues(logger Logger, values map[string]string) Logger {
+// appendContextValues adds passed values to context fo given logger.
+func AppendContextValues(logger Logger, values map[string]string) Logger {
 	if logHandler, ok := logger.(*LogHandler); ok {
 		logHandler.context.AppendValues(values)
 	}
