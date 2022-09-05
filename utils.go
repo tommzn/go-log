@@ -1,7 +1,10 @@
 package log
 
 import (
+	"context"
 	"os"
+
+	"github.com/aws/aws-lambda-go/lambdacontext"
 )
 
 // WithNameSpace appends passed namespace as log context
@@ -29,6 +32,15 @@ func WithK8sContext(logger Logger) Logger {
 func AppendContextValues(logger Logger, values map[string]string) Logger {
 	if logHandler, ok := logger.(*LogHandler); ok {
 		logHandler.context.AppendValues(values)
+	}
+	return logger
+}
+
+// AppendFromLambdaContext appends some values from given context, e.g. a request id,
+// to current log context if passed context is a AWS Lambda context.
+func AppendFromLambdaContext(logger Logger, ctx context.Context) Logger {
+	if lambdaCtx, ok := lambdacontext.FromContext(ctx); ok {
+		return AppendContextValues(logger, map[string]string{LogCtxRequestId: lambdaCtx.AwsRequestID})
 	}
 	return logger
 }

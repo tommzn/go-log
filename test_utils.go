@@ -1,10 +1,13 @@
 package log
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/aws/aws-lambda-go/lambdacontext"
 	config "github.com/tommzn/go-config"
+	utils "github.com/tommzn/go-utils"
 )
 
 // testShipper is a mock for testing with an internal message stack.
@@ -44,4 +47,8 @@ func loadConfigFromFile(fileName string) config.Config {
 	configSource := config.NewFileConfigSource(&fileName)
 	config, _ := configSource.Load()
 	return config
+}
+
+func lambdaContextForTest(ctx context.Context) context.Context {
+	return lambdacontext.NewContext(ctx, &lambdacontext.LambdaContext{AwsRequestID: utils.NewId()})
 }

@@ -1,6 +1,7 @@
 package log
 
 import (
+	"context"
 	"os"
 	"testing"
 
@@ -51,5 +52,31 @@ func (suite *UtilsTestSuite) TestAppendContextValues() {
 
 	logHandler, ok := logger.(*LogHandler)
 	suite.True(ok)
+	suite.Len(logHandler.context.values, 1)
 	suite.Equal("test:val1", logHandler.context.String())
+
+	context2 := make(map[string]string)
+	context2["test-3"] = "val2"
+	logger = AppendContextValues(logger, context2)
+	suite.Len(logHandler.context.values, 2)
+}
+
+func (suite *UtilsTestSuite) TestAppendFromLambdaContext() {
+
+	logger := NewLogger(Debug, nil, nil)
+	lambdaContext := lambdaContextForTest(context.Background())
+	logger = AppendFromLambdaContext(logger, lambdaContext)
+
+	logHandler, ok := logger.(*LogHandler)
+	suite.True(ok)
+	suite.Len(logHandler.context.values, 1)
+	_, ok1 := logHandler.context.values[LogCtxRequestId]
+	suite.True(ok1)
+
+	logger2 := NewLogger(Debug, nil, nil)
+	logger2 = AppendFromLambdaContext(logger2, context.Background())
+
+	logHandler2, ok2 := logger2.(*LogHandler)
+	suite.True(ok2)
+	suite.Len(logHandler2.context.values, 0)
 }
