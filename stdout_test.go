@@ -19,6 +19,8 @@ func TestStdoutShipperTestSuite(t *testing.T) {
 
 func (suite *StdoutShipperTestSuite) TestShipper() {
 
+	orig_out := os.Stdout
+
 	logMessage := "Debug: Test Message, Context: key1,val1"
 
 	shipper := newStdoutShipper()
@@ -42,4 +44,5 @@ func (suite *StdoutShipperTestSuite) TestShipper() {
 
 	// FLuah will have no effect, but should not throw any errors.
 	shipper.flush()
+	os.Stdout = orig_out
 }
