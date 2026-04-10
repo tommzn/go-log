@@ -8,16 +8,4 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go.mod
-
-      - name: Build
-        run: go build ./...
-
-      - name: Test
-        run: go test ./... -count=1
+    uses: tommzn/github-ci/.github/workflows/go.test.v2.yml@v1.0.104
