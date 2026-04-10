@@ -2,9 +2,8 @@ package log
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
-	syslog "log"
 	"net/http"
 	"strings"
 	"sync"
@@ -117,6 +116,7 @@ func (shipper *LogzioShipper) flush() {
 func (shipper *LogzioShipper) obtainShipment() bool {
 
 	timeout := time.NewTimer(shipper.obtainShipmentTimeout)
+	defer timeout.Stop()
 	select {
 	case <-shipper.shipmentStack:
 		return true
@@ -147,6 +147,7 @@ func (shipper *LogzioShipper) readMessages() []string {
 
 	var messages []string
 	timeout := time.NewTimer(shipper.messageReadTimeout)
+	defer timeout.Stop()
 	for len(messages) < shipper.batchSize {
 		select {
 		case message := <-shipper.messageStack:
@@ -164,7 +165,11 @@ func (shipper *LogzioShipper) shipMessages(wg *sync.WaitGroup, messages []string
 	defer wg.Done()
 
 	messageBatch := strings.Join(messages, "\n")
-	req, _ := http.NewRequest("POST", shipper.logzIoUrl(), strings.NewReader(messageBatch))
+	req, err := http.NewRequest("POST", shipper.logzIoUrl(), strings.NewReader(messageBatch))
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	req.Header.Set("Content-Type", "application/json")
 	shipper.sendRequest(req)
 }
@@ -175,11 +180,17 @@ func (shipper *LogzioShipper) sendRequest(request *http.Request) {
 	resp, err := shipper.httpClient.Do(request)
 	if err != nil {
 		log.Println(err)
-	} else if resp.StatusCode >= 400 {
+		return
+	}
+	if resp == nil {
+		log.Println("logz.io: received nil response")
+		return
+	}
+	if resp.StatusCode >= 400 {
 		var responseBody string
-		if resp != nil && resp.Body != nil {
+		if resp.Body != nil {
 			defer resp.Body.Close()
-			if bodyBytes, err := ioutil.ReadAll(resp.Body); err == nil {
+			if bodyBytes, err := io.ReadAll(resp.Body); err == nil {
 				responseBody = string(bodyBytes)
 			}
 		}
@@ -189,7 +200,7 @@ func (shipper *LogzioShipper) sendRequest(request *http.Request) {
 
 // logError writes given error to STDERR.
 func (shipper *LogzioShipper) logError(err error) {
-	syslog.Println(err)
+	log.Println(err)
 }
 
 // logzIoUrl generates the Logz.io endpoint for importing logs.

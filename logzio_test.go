@@ -2,7 +2,7 @@ package log
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -118,7 +118,7 @@ func (suite *LogzioShipperTestSuite) TestShipmentWithFailedRequest() {
 	}
 	suite.Len(shipper.messageStack, shipper.batchSize)
 
-	shipper.httpClient.(*testClient).response = &http.Response{StatusCode: 400, Body: ioutil.NopCloser(strings.NewReader("Shipment Error!"))}
+	shipper.httpClient.(*testClient).response = &http.Response{StatusCode: 400, Body: io.NopCloser(strings.NewReader("Shipment Error!"))}
 	shipper.send(logMessage)
 
 	time.Sleep(1 * time.Second)
@@ -167,6 +167,15 @@ func (suite *LogzioShipperTestSuite) TestGetLogzIoUrl() {
 
 	shipper.secretsManager = secrets.NewStaticSecretsManager(make(map[string]string))
 	suite.Equal("https://localhost:8071/?token=<LogzioTokenNotFound>&type=go-logs", shipper.logzIoUrl())
+}
+
+func (suite *LogzioShipperTestSuite) TestLogError() {
+
+	shipper := suite.shipperForTest()
+	// logError should not panic; it writes to stderr via log.Println
+	suite.NotPanics(func() {
+		shipper.logError(errors.New("test error"))
+	})
 }
 
 func (suite *LogzioShipperTestSuite) TestLogzioIntegration() {

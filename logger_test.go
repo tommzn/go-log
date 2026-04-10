@@ -100,6 +100,18 @@ func (suite *LoggerTestSuite) TestLoggingWithContext() {
 	logger.Flush()
 }
 
+func (suite *LoggerTestSuite) TestLogAndLogf() {
+
+	shipper := newTestShipper().(*testShipper)
+	logger := NewLogger(Debug, nil, shipper)
+
+	logger.Log(Info, "generic log")
+	suite.assertLogMessage(1, "Info: generic log, Context: ", shipper)
+
+	logger.Logf(Error, "generic %s", "error")
+	suite.assertLogMessage(2, "Error: generic error, Context: ", shipper)
+}
+
 func (suite *LoggerTestSuite) assertLogMessage(expectedNumberOfLogMessages int, expectedMessage string, in *testShipper) {
 	suite.Len(in.messages, expectedNumberOfLogMessages)
 	suite.Equal(expectedMessage, in.messages[expectedNumberOfLogMessages-1])
