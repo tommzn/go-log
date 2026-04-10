@@ -29,7 +29,9 @@ func (formatter *LogzioJsonFormatter) format(logLevel LogLevel, logContext LogCo
 	ctxValues["@timestamp"] = time.Now().UTC().Format(LOGZIO_TIMESTAMP_FORMAT)
 	ctxValues[LogCtxMessage] = message
 
-	// Since we marshal string values only here, we'll omit the error
-	logContent, _ := json.Marshal(ctxValues)
+	logContent, err := json.Marshal(ctxValues)
+	if err != nil {
+		return fmt.Sprintf(`{"message":%q,"loglevel":%q,"error":"json marshal failed"}`, message, logLevel.String())
+	}
 	return string(logContent)
 }
