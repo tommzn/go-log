@@ -2,7 +2,6 @@ package log
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -71,8 +70,8 @@ func (suite *ContextTestSuite) TestDefaultContextForNodes() {
 
 func (suite *ContextTestSuite) TestDefaultContextForK8s() {
 
-	os.Setenv("K8S_NODE_NAME", "Node1")
-	os.Setenv("K8S_POD_NAME", "Pod1")
+	suite.T().Setenv("K8S_NODE_NAME", "Node1")
+	suite.T().Setenv("K8S_POD_NAME", "Pod1")
 
 	logContext := DefaultContextForK8s()
 	suite.Len(logContext.values, 2)
@@ -80,9 +79,6 @@ func (suite *ContextTestSuite) TestDefaultContextForK8s() {
 	suite.True(ok1)
 	_, ok2 := logContext.values[LogCtxK8sPod]
 	suite.True(ok2)
-
-	os.Unsetenv("K8S_NODE_NAME")
-	os.Unsetenv("K8S_POD_NAME")
 }
 
 func (suite *ContextTestSuite) contextValuesForTest() map[string]string {
