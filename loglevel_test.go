@@ -2,7 +2,6 @@ package log
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -44,10 +43,8 @@ func (suite *LogLevelTestSuite) TestLogLevelFromEnv() {
 
 func (suite *LogLevelTestSuite) TestLogLevelFromConfig() {
 
-	os.Setenv(ENV_LOGLEVEL, "info")
+	suite.T().Setenv(ENV_LOGLEVEL, "info")
 	suite.Equal(Info, LogLevelFromEnv())
-
-	os.Unsetenv(ENV_LOGLEVEL)
 }
 
 func (suite *LogLevelTestSuite) TestSyslogLevel() {

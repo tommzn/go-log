@@ -2,7 +2,6 @@ package log
 
 import (
 	"context"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -33,8 +32,8 @@ func (suite *UtilsTestSuite) TestKubernetesLogContext() {
 	suite.True(ok)
 	suite.Len(logHandler.context.values, 0)
 
-	os.Setenv("K8S_NODE_NAME", "Node-Name")
-	os.Setenv("K8S_POD_NAME", "Pod-Name")
+	suite.T().Setenv("K8S_NODE_NAME", "Node-Name")
+	suite.T().Setenv("K8S_POD_NAME", "Pod-Name")
 
 	logger2 := NewLogger(Debug, nil, nil)
 	logger2 = WithK8sContext(logger2)
