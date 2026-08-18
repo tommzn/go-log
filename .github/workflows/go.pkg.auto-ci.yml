@@ -15,4 +15,4 @@ permissions:
 
 jobs:
   go-auto-ci:
-    uses:  tommzn/github-ci/.github/workflows/go.pkg.auto-ci.yml@v1.0.106
+    uses:  tommzn/github-ci/.github/workflows/go.pkg.auto-ci.yml@v1.0.107
