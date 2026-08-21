@@ -3,6 +3,7 @@ package log
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"time"
 )
 
@@ -22,9 +23,13 @@ func newLogzioJsonFormatter() LogFormatter {
 }
 
 // format composes passed log level, context and message in a map and marshal it to JSON.
+// Builds its own copy of the context values rather than writing into logContext.values
+// directly - that map is the same instance a *LogHandler keeps for every message it logs,
+// so mutating it here would race with concurrent log calls on the same logger.
 func (formatter *LogzioJsonFormatter) format(logLevel LogLevel, logContext LogContext, message string) string {
 
-	ctxValues := logContext.values
+	ctxValues := make(map[string]string, len(logContext.values)+3)
+	maps.Copy(ctxValues, logContext.values)
 	ctxValues[LogCtxLogLevel] = logLevel.String()
 	ctxValues["@timestamp"] = time.Now().UTC().Format(LOGZIO_TIMESTAMP_FORMAT)
 	ctxValues[LogCtxMessage] = message

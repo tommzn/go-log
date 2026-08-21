@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"os"
 	"sort"
@@ -28,9 +29,11 @@ func newEmptyLogContext() LogContext {
 }
 
 // LogContextWithValues adds passed log values to passed context.
+// The passed values map is copied, not aliased - mutating it after this call
+// has no effect on the returned context.
 func LogContextWithValues(ctx context.Context, values map[string]string) context.Context {
 
-	logContext := newLogContext(values)
+	logContext := newLogContext(maps.Clone(values))
 	if currentLogContext, ok := ctx.Value(logContextKey).(LogContext); ok {
 		logContext = logContext.AppendValues(currentLogContext.values)
 	}
@@ -47,14 +50,19 @@ func getLogContext(ctx context.Context) LogContext {
 	return newLogContext(make(map[string]string))
 }
 
-// AppendValues reads values from current log context, append passed values and returns a new log context.
+// AppendValues reads values from current log context, appends passed values to a copy
+// and returns a new log context. Neither the receiver's nor the passed values map is
+// mutated.
 func (logContext LogContext) AppendValues(values map[string]string) LogContext {
 
-	currentValues := logContext.values
-	for key, value := range values {
-		currentValues[key] = value
+	merged := maps.Clone(logContext.values)
+	if merged == nil {
+		merged = make(map[string]string, len(values))
 	}
-	return newLogContext(currentValues)
+	for key, value := range values {
+		merged[key] = value
+	}
+	return newLogContext(merged)
 }
 
 // String creates a string representation of internal values map.

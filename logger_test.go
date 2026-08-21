@@ -2,6 +2,8 @@ package log
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -90,7 +92,7 @@ func (suite *LoggerTestSuite) TestLoggingWithContext() {
 	contextValues["Key2"] = "Value2"
 	ctx := LogContextWithValues(context.Background(), contextValues)
 	logger := NewLogger(Debug, nil, shipper)
-	logger.WithContext(ctx)
+	logger = logger.WithContext(ctx)
 
 	expectedNumberOfLogMessages := 1
 	logger.Error("This ", "is ", "a ", "test.")
@@ -98,6 +100,39 @@ func (suite *LoggerTestSuite) TestLoggingWithContext() {
 
 	// FLuah will have no effect, but should not throw any errors.
 	logger.Flush()
+}
+
+func (suite *LoggerTestSuite) TestWithContextDoesNotMutateReceiver() {
+
+	shipper := newTestShipper().(*testShipper)
+	original := NewLogger(Debug, nil, shipper)
+
+	ctx := LogContextWithValues(context.Background(), map[string]string{"key": "value"})
+	derived := original.WithContext(ctx)
+
+	suite.NotSame(original, derived)
+
+	original.Error("from original")
+	suite.assertLogMessage(1, "Error: from original, Context: ", shipper)
+
+	derived.Error("from derived")
+	suite.assertLogMessage(2, "Error: from derived, Context: key:value", shipper)
+}
+
+func (suite *LoggerTestSuite) TestWithFieldsDoesNotMutateReceiver() {
+
+	shipper := newTestShipper().(*testShipper)
+	original := NewLogger(Debug, nil, shipper)
+
+	derived := original.WithFields(map[string]string{"key": "value"})
+
+	suite.NotSame(original, derived)
+
+	original.Error("from original")
+	suite.assertLogMessage(1, "Error: from original, Context: ", shipper)
+
+	derived.Error("from derived")
+	suite.assertLogMessage(2, "Error: from derived, Context: key:value", shipper)
 }
 
 func (suite *LoggerTestSuite) TestLogAndLogf() {
@@ -110,6 +145,41 @@ func (suite *LoggerTestSuite) TestLogAndLogf() {
 
 	logger.Logf(Error, "generic %s", "error")
 	suite.assertLogMessage(2, "Error: generic error, Context: ", shipper)
+}
+
+// TestConcurrentWithContextAndLog reproduces the GL-2/GL-3 scenario directly:
+// one shared base logger (the natural "one logger per service" pattern from
+// the README), with many goroutines deriving a per-request logger via
+// WithContext/WithFields and logging concurrently. Run with -race - before
+// the fix this raced on the shared context map (via the mutating WithContext
+// and the mutating LogzioJsonFormatter.format) and could misattribute a log
+// line to the wrong request's context.
+func (suite *LoggerTestSuite) TestConcurrentWithContextAndLog() {
+
+	shipper := newTestShipper().(*testShipper)
+	base := NewLogger(Debug, newLogzioJsonFormatter(), shipper)
+
+	const goroutines = 50
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+	for i := 0; i < goroutines; i++ {
+		go func(n int) {
+			defer wg.Done()
+			requestID := fmt.Sprintf("req-%d", n)
+			ctx := LogContextWithValues(context.Background(), map[string]string{"requestid": requestID})
+			perRequest := base.WithContext(ctx).WithFields(map[string]string{"seq": fmt.Sprintf("%d", n)})
+			perRequest.Info("handling request")
+		}(i)
+	}
+	wg.Wait()
+
+	// The shared base logger's own context must still be empty - none of the
+	// derived, per-request loggers should have leaked their fields back into it.
+	baseHandler, ok := base.(*LogHandler)
+	suite.True(ok)
+	suite.Empty(baseHandler.context.values)
+
+	suite.Len(shipper.messages, goroutines)
 }
 
 func (suite *LoggerTestSuite) assertLogMessage(expectedNumberOfLogMessages int, expectedMessage string, in *testShipper) {

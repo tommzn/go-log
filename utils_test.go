@@ -57,7 +57,14 @@ func (suite *UtilsTestSuite) TestAppendContextValues() {
 	context2 := make(map[string]string)
 	context2["test-3"] = "val2"
 	logger = AppendContextValues(logger, context2)
-	suite.Len(logHandler.context.values, 2)
+
+	// AppendContextValues returns a new Logger rather than mutating the one
+	// passed in, so the original logHandler reference above is unaffected.
+	suite.Len(logHandler.context.values, 1)
+
+	logHandler2, ok2 := logger.(*LogHandler)
+	suite.True(ok2)
+	suite.Len(logHandler2.context.values, 2)
 }
 
 func (suite *UtilsTestSuite) TestAppendFromLambdaContext() {
