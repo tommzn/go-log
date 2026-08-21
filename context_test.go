@@ -55,8 +55,38 @@ func (suite *ContextTestSuite) TestAppendValues() {
 
 	logContext := newLogContext(suite.contextValuesForTest())
 	suite.Len(logContext.values, 2)
-	logContext.AppendValues(additionalContextValues)
-	suite.Len(logContext.values, 3)
+
+	merged := logContext.AppendValues(additionalContextValues)
+
+	// AppendValues returns a new LogContext rather than mutating the receiver.
+	suite.Len(logContext.values, 2)
+	suite.Len(merged.values, 3)
+}
+
+func (suite *ContextTestSuite) TestAppendValuesDoesNotMutatePassedMap() {
+
+	logContext := newLogContext(suite.contextValuesForTest())
+
+	additionalContextValues := make(map[string]string)
+	additionalContextValues["Key3"] = "Value3"
+
+	_ = logContext.AppendValues(additionalContextValues)
+
+	suite.Len(additionalContextValues, 1)
+	_, ok := additionalContextValues["Key1"]
+	suite.False(ok)
+}
+
+func (suite *ContextTestSuite) TestLogContextWithValuesDoesNotMutateCallerMap() {
+
+	// Regression test for GL-3: LogContextWithValues used to write the parent
+	// context's values directly into the caller-supplied map.
+	parentCtx := LogContextWithValues(context.Background(), map[string]string{"parent_key": "parent_val"})
+
+	myValues := map[string]string{"foo": "bar"}
+	_ = LogContextWithValues(parentCtx, myValues)
+
+	suite.Equal(map[string]string{"foo": "bar"}, myValues)
 }
 
 func (suite *ContextTestSuite) TestDefaultContextForNodes() {

@@ -75,18 +75,30 @@ logger.Logf(log.Error, "failed: %s", err)
 
 ### Log context
 
-Attach key/value metadata to every log message via a standard `context.Context`:
+Attach key/value metadata to every log message via a standard `context.Context`.
+`WithContext` and `WithFields` return a *new* Logger rather than modifying the
+one they're called on, so a single base logger can safely be shared across
+goroutines - derive a per-request logger from it instead of mutating it in place:
 
 ```go
+logger := log.NewLogger(log.Debug, nil, nil) // one shared base logger
+
+// per request/goroutine:
 ctx := log.LogContextWithValues(context.Background(), map[string]string{
     "requestid": "abc-123",
     "env":       "production",
 })
-logger.WithContext(ctx)
-logger.Info("context is now attached to all subsequent messages")
+requestLogger := logger.WithContext(ctx)
+requestLogger.Info("context is now attached to this logger only")
+
+// or attach fields directly, without going through a context.Context:
+requestLogger = logger.WithFields(map[string]string{"requestid": "abc-123"})
 ```
 
 ### Utility helpers
+
+Like `WithContext`/`WithFields`, all of these return a new Logger and leave the one
+passed in unchanged:
 
 ```go
 // Attach a namespace label

@@ -8,8 +8,18 @@ import (
 // Logger is an infterface for different types of logger.
 type Logger interface {
 
-	// WithContext sets a given log context.
-	WithContext(context.Context)
+	// WithContext returns a new Logger with the log context from the given
+	// context.Context merged into its existing context (values from ctx win
+	// on key conflicts) - fields already attached via WithFields or similar
+	// are preserved, not discarded. The receiver is left unchanged, so it's
+	// safe to call concurrently on a logger shared across goroutines - assign
+	// the result rather than relying on WithContext to mutate the logger in
+	// place.
+	WithContext(context.Context) Logger
+
+	// WithFields returns a new Logger with the given key/value pairs merged
+	// into its log context. The receiver is left unchanged.
+	WithFields(fields map[string]string) Logger
 
 	// Statusf logs a formated message with log level Status.
 	Statusf(message string, v ...interface{})
@@ -23,16 +33,16 @@ type Logger interface {
 	// Error logs given message with log level Error.
 	Error(v ...interface{})
 
-	// Errorf logs a formated message with log level Info.
+	// Infof logs a formated message with log level Info.
 	Infof(message string, v ...interface{})
 
-	// Error logs given message with log level Info.
+	// Info logs given message with log level Info.
 	Info(v ...interface{})
 
-	// Errorf logs a formated message with log level Debug.
+	// Debugf logs a formated message with log level Debug.
 	Debugf(message string, v ...interface{})
 
-	// Error logs given message with log level Debug.
+	// Debug logs given message with log level Debug.
 	Debug(v ...interface{})
 
 	// Logs a formated message with given log level.

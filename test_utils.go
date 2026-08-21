@@ -4,14 +4,18 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/aws/aws-lambda-go/lambdacontext"
 	config "github.com/tommzn/go-config"
 	utils "github.com/tommzn/go-utils"
 )
 
-// testShipper is a mock for testing with an internal message stack.
+// testShipper is a mock for testing with an internal message stack. Guarded by
+// a mutex so it can be shared across goroutines in concurrency tests, same as
+// the real shippers.
 type testShipper struct {
+	mu       sync.Mutex
 	messages []string
 }
 
@@ -20,6 +24,8 @@ func newTestShipper() LogShipper {
 }
 
 func (shipper *testShipper) send(message string) {
+	shipper.mu.Lock()
+	defer shipper.mu.Unlock()
 	shipper.messages = append(shipper.messages, message)
 }
 

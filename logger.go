@@ -3,13 +3,17 @@ package log
 import (
 	"context"
 	"fmt"
-	"sync"
 )
 
 // LogHandler provides methods to log messges with different log level
 // and takes care about formatting and shipping logs.
+//
+// A *LogHandler is immutable once constructed: logLevel and context are never
+// modified after creation, so a single instance can safely be shared across
+// goroutines and read concurrently by log() without locking. WithContext and
+// WithFields don't mutate the receiver - they return a new *LogHandler that
+// shares the same formatter and shipper.
 type LogHandler struct {
-	mu        sync.RWMutex
 	logLevel  LogLevel
 	context   LogContext
 	formatter LogFormatter
@@ -24,21 +28,34 @@ func (logger *LogHandler) logf(logLevel LogLevel, message string, v ...interface
 // log will create a log message with given values.
 func (logger *LogHandler) log(logLevel LogLevel, v ...interface{}) {
 
-	logger.mu.RLock()
-	level := logger.logLevel
-	ctx := logger.context
-	logger.mu.RUnlock()
-
-	if level >= logLevel {
-		logger.shipper.send(logger.formatter.format(logLevel, ctx, fmt.Sprint(v...)))
+	if logger.logLevel >= logLevel {
+		logger.shipper.send(logger.formatter.format(logLevel, logger.context, fmt.Sprint(v...)))
 	}
 }
 
-// WithContext applies the log context.
-func (logger *LogHandler) WithContext(ctx context.Context) {
-	logger.mu.Lock()
-	logger.context = getLogContext(ctx)
-	logger.mu.Unlock()
+// WithContext returns a new Logger with the log context from the given
+// context.Context merged into its existing context - matching WithFields'
+// merge semantics rather than discarding fields already attached to the
+// receiver (e.g. via a prior WithFields/WithNameSpace call). Values from ctx
+// win on key conflicts. The receiver is left unchanged.
+func (logger *LogHandler) WithContext(ctx context.Context) Logger {
+	return &LogHandler{
+		logLevel:  logger.logLevel,
+		context:   logger.context.AppendValues(getLogContext(ctx).values),
+		formatter: logger.formatter,
+		shipper:   logger.shipper,
+	}
+}
+
+// WithFields returns a new Logger with the given key/value pairs merged into
+// its log context. The receiver is left unchanged.
+func (logger *LogHandler) WithFields(fields map[string]string) Logger {
+	return &LogHandler{
+		logLevel:  logger.logLevel,
+		context:   logger.context.AppendValues(fields),
+		formatter: logger.formatter,
+		shipper:   logger.shipper,
+	}
 }
 
 // Statusf format given log message for log level Status.
