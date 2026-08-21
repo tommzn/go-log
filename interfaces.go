@@ -9,9 +9,12 @@ import (
 type Logger interface {
 
 	// WithContext returns a new Logger with the log context from the given
-	// context.Context attached. The receiver is left unchanged, so it's safe
-	// to call concurrently on a logger shared across goroutines - assign the
-	// result rather than relying on WithContext to mutate the logger in place.
+	// context.Context merged into its existing context (values from ctx win
+	// on key conflicts) - fields already attached via WithFields or similar
+	// are preserved, not discarded. The receiver is left unchanged, so it's
+	// safe to call concurrently on a logger shared across goroutines - assign
+	// the result rather than relying on WithContext to mutate the logger in
+	// place.
 	WithContext(context.Context) Logger
 
 	// WithFields returns a new Logger with the given key/value pairs merged

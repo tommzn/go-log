@@ -135,6 +135,27 @@ func (suite *LoggerTestSuite) TestWithFieldsDoesNotMutateReceiver() {
 	suite.assertLogMessage(2, "Error: from derived, Context: key:value", shipper)
 }
 
+func (suite *LoggerTestSuite) TestWithContextMergesRatherThanReplaces() {
+
+	// Regression test: WithContext used to fully replace the receiver's
+	// context, so chaining WithFields(...).WithContext(ctx) silently dropped
+	// base-level fields (e.g. a namespace set once on a shared logger).
+	shipper := newTestShipper().(*testShipper)
+	base := NewLogger(Debug, nil, shipper).WithFields(map[string]string{"namespace": "auth-service"})
+
+	ctx := LogContextWithValues(context.Background(), map[string]string{"requestid": "abc-123"})
+	requestLogger := base.WithContext(ctx)
+
+	requestLogger.Error("handling request")
+	suite.assertLogMessage(1, "Error: handling request, Context: namespace:auth-service,requestid:abc-123", shipper)
+
+	// Values from ctx win on key conflicts.
+	overrideCtx := LogContextWithValues(context.Background(), map[string]string{"namespace": "overridden"})
+	overridden := base.WithContext(overrideCtx)
+	overridden.Error("conflict")
+	suite.assertLogMessage(2, "Error: conflict, Context: namespace:overridden", shipper)
+}
+
 func (suite *LoggerTestSuite) TestLogAndLogf() {
 
 	shipper := newTestShipper().(*testShipper)

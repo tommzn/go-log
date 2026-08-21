@@ -34,11 +34,14 @@ func (logger *LogHandler) log(logLevel LogLevel, v ...interface{}) {
 }
 
 // WithContext returns a new Logger with the log context from the given
-// context.Context attached. The receiver is left unchanged.
+// context.Context merged into its existing context - matching WithFields'
+// merge semantics rather than discarding fields already attached to the
+// receiver (e.g. via a prior WithFields/WithNameSpace call). Values from ctx
+// win on key conflicts. The receiver is left unchanged.
 func (logger *LogHandler) WithContext(ctx context.Context) Logger {
 	return &LogHandler{
 		logLevel:  logger.logLevel,
-		context:   getLogContext(ctx),
+		context:   logger.context.AppendValues(getLogContext(ctx).values),
 		formatter: logger.formatter,
 		shipper:   logger.shipper,
 	}
