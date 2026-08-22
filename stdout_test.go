@@ -30,7 +30,7 @@ func (suite *StdoutShipperTestSuite) TestShipper() {
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 
-	shipper.send(logMessage)
+	shipper.Send(logMessage)
 
 	outC := make(chan string)
 	go func() {
@@ -42,7 +42,7 @@ func (suite *StdoutShipperTestSuite) TestShipper() {
 	out := <-outC
 	suite.Equal(logMessage+"\n", out)
 
-	// FLuah will have no effect, but should not throw any errors.
-	shipper.flush()
+	// Flush will have no effect, but should not throw any errors.
+	shipper.Flush()
 	os.Stdout = orig_out
 }

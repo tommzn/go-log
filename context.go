@@ -23,6 +23,19 @@ func newLogContext(values map[string]string) LogContext {
 	return LogContext{values: values}
 }
 
+// NewLogContext returns a new LogContext with passed key/value pairs. The
+// passed map is copied, not aliased. Useful for LogFormatter implementations
+// living outside this package (see LogFormatter, RegisterShipper) that need
+// to construct a LogContext directly, e.g. in their own tests.
+func NewLogContext(values map[string]string) LogContext {
+	return newLogContext(maps.Clone(values))
+}
+
+// Values returns a copy of the context's key/value pairs.
+func (logContext LogContext) Values() map[string]string {
+	return maps.Clone(logContext.values)
+}
+
 // newEmptyLogContext returns a new log context with an empty values map.
 func newEmptyLogContext() LogContext {
 	return LogContext{values: make(map[string]string)}

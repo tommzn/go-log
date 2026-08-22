@@ -2,8 +2,6 @@
 package log
 
 import (
-	"strings"
-
 	config "github.com/tommzn/go-config"
 	secrets "github.com/tommzn/go-secrets"
 )
@@ -27,20 +25,11 @@ func NewLogger(logLevel LogLevel, formatter LogFormatter, shipper LogShipper) Lo
 }
 
 // NewLoggerFromConfig returns a new logger created depending on passed config.
+// The shipper is picked based on the "log.shipper" config value - see
+// RegisterShipper for how non-stdout shippers (e.g. Logz.io) plug in.
 func NewLoggerFromConfig(conf config.Config, secretsManager secrets.SecretsManager) Logger {
 
-	var formatter LogFormatter
-	var shipper LogShipper
-
-	shipperType := conf.Get("log.shipper", nil)
-	if shipperType != nil && strings.ToLower(*shipperType) == "logzio" {
-		formatter = newLogzioJsonFormatter()
-		shipper = newLogzioShipper(conf, secretsManager)
-	} else {
-		formatter = newDefaultFormatter()
-		shipper = newStdoutShipper()
-	}
-
+	formatter, shipper := resolveShipperFromConfig(conf, secretsManager)
 	return &LogHandler{
 		logLevel:  LogLevelFromConfig(conf),
 		context:   newEmptyLogContext(),

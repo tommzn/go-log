@@ -1,27 +1,35 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/tommzn/go-utils.svg)](https://pkg.go.dev/github.com/tommzn/go-log)
+[![Go Reference](https://pkg.go.dev/badge/github.com/tommzn/go-log/v2.svg)](https://pkg.go.dev/github.com/tommzn/go-log/v2)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/tommzn/go-log)
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/tommzn/go-log)
-[![Go Report Card](https://goreportcard.com/badge/github.com/tommzn/go-log)](https://goreportcard.com/report/github.com/tommzn/go-log)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tommzn/go-log/v2)](https://goreportcard.com/report/github.com/tommzn/go-log/v2)
 
 # go-log
 
 A flexible, pluggable logging library for Go applications. Supports multiple log levels, swappable formatters and shippers, and first-class integration with AWS Lambda, Kubernetes, and [Logz.io](https://logz.io).
 
+The core package (stdout logging, context, levels) has no dependency on `net/http` or anything it pulls in - Logz.io support lives in a separate [`logzio`](./logzio) subpackage you only pay for if you import it. See [Package layout](#package-layout) below.
+
+> **v2**: this is a new major version - update your import path from `github.com/tommzn/go-log` to `github.com/tommzn/go-log/v2`. If you used the Logz.io shipper, add `import _ "github.com/tommzn/go-log/v2/logzio"` (or construct it explicitly, see below) - `LogzioShipper`/`LogzioJsonFormatter` moved out of the core package into `logzio.Shipper`/`logzio.Formatter`. Everything else - `NewLogger`, `NewLoggerFromConfig`, `Logger`, log levels, context handling - is unchanged.
+
 ## Features
 
 - Five log levels: `None`, `Status`, `Error`, `Info`, `Debug`
-- Pluggable formatters: plain text or Logz.io-compatible JSON
-- Pluggable shippers: stdout or async batched delivery to Logz.io
+- Pluggable formatters: plain text or (via the `logzio` subpackage) Logz.io-compatible JSON
+- Pluggable shippers: stdout or (via the `logzio` subpackage) async batched delivery to Logz.io
 - Context-aware logging with key/value metadata
 - AWS Lambda request ID injection
 - Kubernetes node/pod metadata injection
 - Configuration-driven setup via YAML
-- Thread-safe for concurrent use
+- Safe for concurrent use: a single logger can be shared across goroutines - `WithContext`/`WithFields` return a new logger rather than mutating the shared one
 
 ## Installation
 
 ```sh
-go get github.com/tommzn/go-log
+# Core package - stdout logging, no net/http dependency
+go get github.com/tommzn/go-log/v2
+
+# Logz.io shipper (only when you need it)
+go get github.com/tommzn/go-log/v2/logzio
 ```
 
 ## Usage
@@ -29,7 +37,7 @@ go get github.com/tommzn/go-log
 ### Basic logger
 
 ```go
-import log "github.com/tommzn/go-log"
+import log "github.com/tommzn/go-log/v2"
 
 logger := log.NewLogger(log.Debug, nil, nil)
 
@@ -154,6 +162,7 @@ log:
 ```
 
 **Logz.io:**
+
 ```yaml
 log:
   loglevel: debug
@@ -167,21 +176,50 @@ log:
     messagereadtimeout: 50ms             # batch read timeout, default: 50ms
 ```
 
+`log.shipper: logzio` only takes effect if the `logzio` subpackage has been activated with a blank import - `NewLoggerFromConfig` doesn't know about it otherwise, and falls back to stdout:
+
+```go
+import (
+    log "github.com/tommzn/go-log/v2"
+    _ "github.com/tommzn/go-log/v2/logzio" // activates "shipper: logzio"
+)
+
+logger := log.NewLoggerFromConfig(conf, secretsManager)
+```
+
+Or construct the Logz.io shipper/formatter explicitly, without going through config-driven dispatch at all:
+
+```go
+import (
+    log "github.com/tommzn/go-log/v2"
+    "github.com/tommzn/go-log/v2/logzio"
+)
+
+logger := log.NewLogger(log.Debug, logzio.NewFormatter(), logzio.NewShipper(conf, secretsManager))
+```
+
 The Logz.io authentication token is read at shipment time from a secrets manager under the key `LOGZIO_TOKEN`. See [go-secrets](https://github.com/tommzn/go-secrets) for configuration options.
+
+## Package layout
+
+- `github.com/tommzn/go-log/v2` - `Logger`, `LogHandler`, `DefaultFormatter`, `StdoutShipper`, levels, context. No `net/http` dependency.
+- `github.com/tommzn/go-log/v2/logzio` - `Formatter` and `Shipper` for Logz.io. Pulls in `net/http` (and the TLS/certificate/IDNA machinery that comes with it) - only compiled into your binary if you actually import this package.
+
+`LogFormatter` and `LogShipper` are plain exported interfaces, so you can plug in your own shipper the same way `logzio` does - implement `Send(string)`/`Flush()` or `Format(LogLevel, LogContext, string) string`, and optionally call `log.RegisterShipper(name, factory)` from an `init()` to hook it into `NewLoggerFromConfig`'s `log.shipper` dispatch.
 
 ## Shippers
 
 | Shipper | Description |
 |---------|-------------|
-| `StdoutShipper` | Prints each message immediately to stdout (default) |
-| `LogzioShipper` | Buffers messages and ships them in async batches to Logz.io |
+| `log.StdoutShipper` | Prints each message immediately to stdout (default) |
+| `logzio.Shipper` | Buffers messages and ships them in async batches to Logz.io |
 
 ## Formatters
 
 | Formatter | Output |
 |-----------|--------|
-| `DefaultFormatter` | `<Level>: <message>, Context: <key:value,...>` |
-| `LogzioJsonFormatter` | JSON with `@timestamp`, `loglevel`, `message`, and all context fields |
+| `log.DefaultFormatter` | `<Level>: <message>, Context: <key:value,...>` |
+| `logzio.Formatter` | JSON with `@timestamp`, `loglevel`, `message`, and all context fields |
 
 ## Requirements
 

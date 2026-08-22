@@ -1,6 +1,22 @@
-package log
+// Package logzio provides a LogShipper/LogFormatter pair that ship log
+// messages to Logz.io. Import this package only when Logz.io support is
+// needed; it brings in net/http (and everything that pulls in - crypto/tls,
+// IDNA, Unicode normalization) as a dependency. Everything else in go-log
+// stays dependency-light without it.
+//
+// Blank-import this package to activate it for config-driven dispatch via
+// log.NewLoggerFromConfig ("log.shipper: logzio" in config):
+//
+//	import _ "github.com/tommzn/go-log/v2/logzio"
+//
+// Or construct a shipper/formatter explicitly, without going through config
+// at all:
+//
+//	logger := log.NewLogger(log.Debug, logzio.NewFormatter(), logzio.NewShipper(conf, secretsManager))
+package logzio
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -8,6 +24,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	golog "github.com/tommzn/go-log/v2"
 
 	config "github.com/tommzn/go-config"
 	secrets "github.com/tommzn/go-secrets"
@@ -45,7 +63,93 @@ const SHIPMENT_WAIT_TIMEOUT = 1 * time.Second
 // Can be set by config: log.logzio.messagereadtimeout
 const MESSAGE_READ_TIMEOUT = 50 * time.Millisecond
 
-func newLogzioShipper(conf config.Config, secretsManager secrets.SecretsManager) LogShipper {
+// init registers this shipper with go-log's config-driven dispatch, so
+// log.NewLoggerFromConfig picks it up for "log.shipper: logzio" once this
+// package has been blank-imported.
+func init() {
+	golog.RegisterShipper("logzio", func(conf config.Config, secretsManager secrets.SecretsManager) (golog.LogFormatter, golog.LogShipper) {
+		return NewFormatter(), NewShipper(conf, secretsManager)
+	})
+}
+
+// httpClient is an interface for a HTTP client.
+type httpClient interface {
+
+	// Do will send a http request.
+	Do(req *http.Request) (*http.Response, error)
+}
+
+// Formatter converts passed values to a JSON record suitable for an import at Logz.io.
+type Formatter struct {
+}
+
+// NewFormatter returns a new Formatter.
+func NewFormatter() golog.LogFormatter {
+	return &Formatter{}
+}
+
+// Format composes passed log level, context and message in a map and marshals it to JSON.
+// Builds its own copy of the context values (via LogContext.Values()) rather than
+// mutating anything owned by logContext - that value may be the same instance a
+// *log.LogHandler keeps for every message it logs, so mutating it here would race
+// with concurrent log calls on the same logger.
+func (formatter *Formatter) Format(logLevel golog.LogLevel, logContext golog.LogContext, message string) string {
+
+	ctxValues := logContext.Values()
+	if ctxValues == nil {
+		ctxValues = make(map[string]string, 3)
+	}
+	ctxValues[golog.LogCtxLogLevel] = logLevel.String()
+	ctxValues["@timestamp"] = time.Now().UTC().Format(LOGZIO_TIMESTAMP_FORMAT)
+	ctxValues[golog.LogCtxMessage] = message
+
+	logContent, err := json.Marshal(ctxValues)
+	if err != nil {
+		return fmt.Sprintf(`{"message":%q,"loglevel":%q,"error":"json marshal failed"}`, message, logLevel.String())
+	}
+	return string(logContent)
+}
+
+// Shipper delivers log messages to Logz.io.
+type Shipper struct {
+
+	// logzioUrl is the endpoint all logs will be shipped to.
+	logzioUrl string
+
+	// batchSize defines the number of logs shipped together in a batch.
+	batchSize int
+
+	// shipmentStack is a worker queue to restrict parallel shipment.
+	shipmentStack chan bool
+
+	// messageStack is a channel to buffer log messages.
+	messageStack chan string
+
+	// obtainShipmentTimeout defines the time the shipper will wait to get
+	// a slot from shipmentStack.
+	obtainShipmentTimeout time.Duration
+
+	// messageReadTimeout defines the time a shipper will wait for new messages
+	// during reading from messageStack.
+	messageReadTimeout time.Duration
+
+	// httpClient is used to send POST request to ship log messages.
+	httpClient httpClient
+
+	// secretsManager is used to obtain Logz.io token for shipment requests.
+	secretsManager secrets.SecretsManager
+}
+
+// NewShipper returns a new Shipper, configured from conf. If secretsManager
+// is nil, a default secrets.NewSecretsManager() (environment-variable-backed)
+// is used instead - shipping a message calls secretsManager.Obtain to get the
+// Logz.io token, which would otherwise panic on first shipment rather than
+// failing fast at construction time.
+func NewShipper(conf config.Config, secretsManager secrets.SecretsManager) golog.LogShipper {
+
+	if secretsManager == nil {
+		secretsManager = secrets.NewSecretsManager()
+	}
 
 	logzioUrl := conf.Get("log.logzio.url", config.AsStringPtr(LOGZIO_URL))
 	batchSize := conf.GetAsInt("log.logzio.batchsize", config.AsIntPtr(LOGZIO_BATCH_SIZE))
@@ -54,7 +158,7 @@ func newLogzioShipper(conf config.Config, secretsManager secrets.SecretsManager)
 	shipmentTimeout := conf.GetAsDuration("log.logzio.shipmenttimeout", config.AsDurationPtr(SHIPMENT_WAIT_TIMEOUT))
 	messageReadTimeout := conf.GetAsDuration("log.logzio.messagereadtimeout", config.AsDurationPtr(MESSAGE_READ_TIMEOUT))
 
-	shipper := &LogzioShipper{
+	shipper := &Shipper{
 		logzioUrl:             *logzioUrl,
 		batchSize:             *batchSize,
 		shipmentStack:         make(chan bool, *shipmentStackSize),
@@ -70,7 +174,7 @@ func newLogzioShipper(conf config.Config, secretsManager secrets.SecretsManager)
 
 // Send will add passed log message to an internal queue and starts shipment if
 // number of buffered messages exceeds defined batch size.
-func (shipper *LogzioShipper) send(message string) {
+func (shipper *Shipper) Send(message string) {
 
 	shipper.messageStack <- message
 
@@ -94,14 +198,14 @@ func (shipper *LogzioShipper) send(message string) {
 }
 
 // initShipmentStack fills the shipment stack with all slots.
-func (shipper *LogzioShipper) initShipmentStack() {
+func (shipper *Shipper) initShipmentStack() {
 	for len(shipper.shipmentStack) < cap(shipper.shipmentStack) {
 		shipper.shipmentStack <- true
 	}
 }
 
 // Flush will deliver all messages from internal channel to Logz.io.
-func (shipper *LogzioShipper) flush() {
+func (shipper *Shipper) Flush() {
 
 	wg := &sync.WaitGroup{}
 	for len(shipper.messageStack) > 0 {
@@ -111,9 +215,9 @@ func (shipper *LogzioShipper) flush() {
 	}
 }
 
-// ObtainShipment will try to get a slot for shipment from shipment stack.
+// obtainShipment will try to get a slot for shipment from shipment stack.
 // It will return with false if obtainShipmentTimeout exceeds.
-func (shipper *LogzioShipper) obtainShipment() bool {
+func (shipper *Shipper) obtainShipment() bool {
 
 	timeout := time.NewTimer(shipper.obtainShipmentTimeout)
 	defer timeout.Stop()
@@ -125,25 +229,25 @@ func (shipper *LogzioShipper) obtainShipment() bool {
 	}
 }
 
-// ReleaseShipment will return a used slot to the shipment stack.
-func (shipper *LogzioShipper) releaseShipment() {
+// releaseShipment will return a used slot to the shipment stack.
+func (shipper *Shipper) releaseShipment() {
 
 	if len(shipper.shipmentStack) < cap(shipper.shipmentStack) {
 		shipper.shipmentStack <- true
 	}
 }
 
-// ShipBatch will read number of messages defined by batch size from internal channel
+// shipBatch will read number of messages defined by batch size from internal channel
 // and start shipment for all of them.
-func (shipper *LogzioShipper) shipBatch(wg *sync.WaitGroup) {
+func (shipper *Shipper) shipBatch(wg *sync.WaitGroup) {
 
 	messages := shipper.readMessages()
 	shipper.shipMessages(wg, messages)
 }
 
-// ReadMessages will try to read number of messages defined by batch size from internal buffer.
+// readMessages will try to read number of messages defined by batch size from internal buffer.
 // If it exceeds messages read timeout it will return messages it reads up to this point in time.
-func (shipper *LogzioShipper) readMessages() []string {
+func (shipper *Shipper) readMessages() []string {
 
 	var messages []string
 	timeout := time.NewTimer(shipper.messageReadTimeout)
@@ -159,8 +263,8 @@ func (shipper *LogzioShipper) readMessages() []string {
 	return messages
 }
 
-// ShipMessages will send passed log messages to defines Logz.io endpoint.
-func (shipper *LogzioShipper) shipMessages(wg *sync.WaitGroup, messages []string) {
+// shipMessages will send passed log messages to defines Logz.io endpoint.
+func (shipper *Shipper) shipMessages(wg *sync.WaitGroup, messages []string) {
 
 	defer wg.Done()
 
@@ -174,8 +278,8 @@ func (shipper *LogzioShipper) shipMessages(wg *sync.WaitGroup, messages []string
 	shipper.sendRequest(req)
 }
 
-// SendRequest will execute passed request and validate it's response.
-func (shipper *LogzioShipper) sendRequest(request *http.Request) {
+// sendRequest will execute passed request and validate it's response.
+func (shipper *Shipper) sendRequest(request *http.Request) {
 
 	resp, err := shipper.httpClient.Do(request)
 	if err != nil {
@@ -199,12 +303,12 @@ func (shipper *LogzioShipper) sendRequest(request *http.Request) {
 }
 
 // logError writes given error to STDERR.
-func (shipper *LogzioShipper) logError(err error) {
+func (shipper *Shipper) logError(err error) {
 	log.Println(err)
 }
 
 // logzIoUrl generates the Logz.io endpoint for importing logs.
-func (shipper *LogzioShipper) logzIoUrl() string {
+func (shipper *Shipper) logzIoUrl() string {
 	token, err := shipper.secretsManager.Obtain(LOGZIO_TOKEN_KEY)
 	if err != nil {
 		shipper.logError(err)
