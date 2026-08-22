@@ -7,7 +7,7 @@
 // Blank-import this package to activate it for config-driven dispatch via
 // log.NewLoggerFromConfig ("log.shipper: logzio" in config):
 //
-//	import _ "github.com/tommzn/go-log/logzio"
+//	import _ "github.com/tommzn/go-log/v2/logzio"
 //
 // Or construct a shipper/formatter explicitly, without going through config
 // at all:
@@ -25,7 +25,7 @@ import (
 	"sync"
 	"time"
 
-	golog "github.com/tommzn/go-log"
+	golog "github.com/tommzn/go-log/v2"
 
 	config "github.com/tommzn/go-config"
 	secrets "github.com/tommzn/go-secrets"

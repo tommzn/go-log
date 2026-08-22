@@ -56,7 +56,7 @@ type Logger interface {
 
 // LogShipper will take care of sending logs to a defined target. Exported so
 // shipper implementations can live in their own package (e.g.
-// github.com/tommzn/go-log/logzio) without needing to be part of this one -
+// github.com/tommzn/go-log/v2/logzio) without needing to be part of this one -
 // see RegisterShipper.
 type LogShipper interface {
 

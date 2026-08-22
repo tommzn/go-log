@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	golog "github.com/tommzn/go-log"
+	golog "github.com/tommzn/go-log/v2"
 )
 
 type FormatterTestSuite struct {

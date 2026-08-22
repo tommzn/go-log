@@ -24,7 +24,7 @@ var shipperFactories = map[string]ShipperFactory{}
 // into every consumer of this one. Activate a shipper by blank-importing its
 // package, which registers it from an init() function:
 //
-//	import _ "github.com/tommzn/go-log/logzio"
+//	import _ "github.com/tommzn/go-log/v2/logzio"
 //
 // If "log.shipper" names a shipper that hasn't been registered this way -
 // including built-in ones like "logzio" - NewLoggerFromConfig falls back to

@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	golog "github.com/tommzn/go-log"
+	golog "github.com/tommzn/go-log/v2"
 
 	config "github.com/tommzn/go-config"
 	secrets "github.com/tommzn/go-secrets"

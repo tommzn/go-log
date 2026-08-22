@@ -1,4 +1,4 @@
-module github.com/tommzn/go-log
+module github.com/tommzn/go-log/v2
 
 go 1.25.9
 

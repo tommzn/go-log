@@ -1,4 +1,4 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/tommzn/go-utils.svg)](https://pkg.go.dev/github.com/tommzn/go-log)
+[![Go Reference](https://pkg.go.dev/badge/github.com/tommzn/go-log/v2.svg)](https://pkg.go.dev/github.com/tommzn/go-log/v2)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/tommzn/go-log)
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/tommzn/go-log)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tommzn/go-log)](https://goreportcard.com/report/github.com/tommzn/go-log)
@@ -8,6 +8,8 @@
 A flexible, pluggable logging library for Go applications. Supports multiple log levels, swappable formatters and shippers, and first-class integration with AWS Lambda, Kubernetes, and [Logz.io](https://logz.io).
 
 The core package (stdout logging, context, levels) has no dependency on `net/http` or anything it pulls in - Logz.io support lives in a separate [`logzio`](./logzio) subpackage you only pay for if you import it. See [Package layout](#package-layout) below.
+
+> **v2**: this is a new major version - update your import path from `github.com/tommzn/go-log` to `github.com/tommzn/go-log/v2`. If you used the Logz.io shipper, add `import _ "github.com/tommzn/go-log/v2/logzio"` (or construct it explicitly, see below) - `LogzioShipper`/`LogzioJsonFormatter` moved out of the core package into `logzio.Shipper`/`logzio.Formatter`. Everything else - `NewLogger`, `NewLoggerFromConfig`, `Logger`, log levels, context handling - is unchanged.
 
 ## Features
 
@@ -24,10 +26,10 @@ The core package (stdout logging, context, levels) has no dependency on `net/htt
 
 ```sh
 # Core package - stdout logging, no net/http dependency
-go get github.com/tommzn/go-log
+go get github.com/tommzn/go-log/v2
 
 # Logz.io shipper (only when you need it)
-go get github.com/tommzn/go-log/logzio
+go get github.com/tommzn/go-log/v2/logzio
 ```
 
 ## Usage
@@ -35,7 +37,7 @@ go get github.com/tommzn/go-log/logzio
 ### Basic logger
 
 ```go
-import log "github.com/tommzn/go-log"
+import log "github.com/tommzn/go-log/v2"
 
 logger := log.NewLogger(log.Debug, nil, nil)
 
@@ -178,8 +180,8 @@ log:
 
 ```go
 import (
-    log "github.com/tommzn/go-log"
-    _ "github.com/tommzn/go-log/logzio" // activates "shipper: logzio"
+    log "github.com/tommzn/go-log/v2"
+    _ "github.com/tommzn/go-log/v2/logzio" // activates "shipper: logzio"
 )
 
 logger := log.NewLoggerFromConfig(conf, secretsManager)
@@ -189,8 +191,8 @@ Or construct the Logz.io shipper/formatter explicitly, without going through con
 
 ```go
 import (
-    log "github.com/tommzn/go-log"
-    "github.com/tommzn/go-log/logzio"
+    log "github.com/tommzn/go-log/v2"
+    "github.com/tommzn/go-log/v2/logzio"
 )
 
 logger := log.NewLogger(log.Debug, logzio.NewFormatter(), logzio.NewShipper(conf, secretsManager))
@@ -200,8 +202,8 @@ The Logz.io authentication token is read at shipment time from a secrets manager
 
 ## Package layout
 
-- `github.com/tommzn/go-log` - `Logger`, `LogHandler`, `DefaultFormatter`, `StdoutShipper`, levels, context. No `net/http` dependency.
-- `github.com/tommzn/go-log/logzio` - `Formatter` and `Shipper` for Logz.io. Pulls in `net/http` (and the TLS/certificate/IDNA machinery that comes with it) - only compiled into your binary if you actually import this package.
+- `github.com/tommzn/go-log/v2` - `Logger`, `LogHandler`, `DefaultFormatter`, `StdoutShipper`, levels, context. No `net/http` dependency.
+- `github.com/tommzn/go-log/v2/logzio` - `Formatter` and `Shipper` for Logz.io. Pulls in `net/http` (and the TLS/certificate/IDNA machinery that comes with it) - only compiled into your binary if you actually import this package.
 
 `LogFormatter` and `LogShipper` are plain exported interfaces, so you can plug in your own shipper the same way `logzio` does - implement `Send(string)`/`Flush()` or `Format(LogLevel, LogContext, string) string`, and optionally call `log.RegisterShipper(name, factory)` from an `init()` to hook it into `NewLoggerFromConfig`'s `log.shipper` dispatch.
 
