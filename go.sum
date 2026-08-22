@@ -1,6 +1,5 @@
 github.com/aws/aws-lambda-go v1.54.0 h1:EGYpdyRGF88xszqlGcBewz811mJeRS+maNlLZXFheII=
 github.com/aws/aws-lambda-go v1.54.0/go.mod h1:dpMpZgvWx5vuQJfBt0zqBha60q7Dd7RfgJv23DymV8A=
-github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fossoreslp/uuid v1.1.0 h1:pe9Xh/1YwgjlwQPC3lUgUy0xxBuPk8X0Bax38ztfMwQ=
@@ -19,8 +18,8 @@ github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
 github.com/tommzn/go-config v1.6.1 h1:c0umyrCzhhWN9RgsLS3ylK1seardhQVekn0E4GICCuU=
 github.com/tommzn/go-config v1.6.1/go.mod h1:+aFEUJSNTbHFPFelzHq4k94WYnZvA9FpFY160SBaZ60=
-github.com/tommzn/go-secrets v1.1.9 h1:ZEAyeL0H/MeE0WiqWsybambIFJsVDqtsTnyb36O29aw=
-github.com/tommzn/go-secrets v1.1.9/go.mod h1:457LB3kvM9g8azlFgIY5ezSCFxDOtdz7Q30BbFYsrWE=
+github.com/tommzn/go-secrets v1.1.10 h1:mDRoemCtkbg83zZVgPF7SiXQTTMr7RW5CJ2hSHq4/8o=
+github.com/tommzn/go-secrets v1.1.10/go.mod h1:EMUci2rPXo6Phcc59pOyx5DiP1HTxpLwKJnMlHqjFLg=
 github.com/tommzn/go-utils v1.0.8 h1:+RT//Fv7ZWUWnQMoxWweg+bA6xER6X5DG3c+k3HFJ+I=
 github.com/tommzn/go-utils v1.0.8/go.mod h1:7DriSEBykOJECDN7SyLXauuxjr/9C+PHRwb24ApQS+w=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
