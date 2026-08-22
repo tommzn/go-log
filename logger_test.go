@@ -27,9 +27,12 @@ func (suite *LoggerTestSuite) TestCreateLoggerWithDefaults() {
 
 func (suite *LoggerTestSuite) TestCreateLoggerFromConfig() {
 
+	// "log.shipper: logzio" without the logzio package registered (see
+	// RegisterShipper) - this package alone has no way to construct that
+	// shipper, so it must fall back to stdout rather than fail.
 	conf1 := loadConfigFromFile("config/logzio.yml")
 	logger1 := NewLoggerFromConfig(conf1, secrets.NewSecretsManager())
-	suite.IsType(&LogzioShipper{}, logger1.(*LogHandler).shipper)
+	suite.IsType(&StdoutShipper{}, logger1.(*LogHandler).shipper)
 	suite.Equal(Debug, logger1.(*LogHandler).logLevel)
 	logger1.Error("Test Log")
 
@@ -172,13 +175,13 @@ func (suite *LoggerTestSuite) TestLogAndLogf() {
 // one shared base logger (the natural "one logger per service" pattern from
 // the README), with many goroutines deriving a per-request logger via
 // WithContext/WithFields and logging concurrently. Run with -race - before
-// the fix this raced on the shared context map (via the mutating WithContext
-// and the mutating LogzioJsonFormatter.format) and could misattribute a log
-// line to the wrong request's context.
+// the fix this raced on the shared context map (via the mutating WithContext,
+// plus the logzio JSON formatter mutating it in place - see the logzio
+// subpackage's own formatter tests for that half now that it's split out).
 func (suite *LoggerTestSuite) TestConcurrentWithContextAndLog() {
 
 	shipper := newTestShipper().(*testShipper)
-	base := NewLogger(Debug, newLogzioJsonFormatter(), shipper)
+	base := NewLogger(Debug, newDefaultFormatter(), shipper)
 
 	const goroutines = 50
 	var wg sync.WaitGroup

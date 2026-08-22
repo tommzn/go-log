@@ -2,7 +2,6 @@ package log
 
 import (
 	"context"
-	"net/http"
 )
 
 // Logger is an infterface for different types of logger.
@@ -55,29 +54,26 @@ type Logger interface {
 	Flush()
 }
 
-// LogShipper will take care of sending logs to a defined target.
+// LogShipper will take care of sending logs to a defined target. Exported so
+// shipper implementations can live in their own package (e.g.
+// github.com/tommzn/go-log/logzio) without needing to be part of this one -
+// see RegisterShipper.
 type LogShipper interface {
 
 	// Send will process given message. Depending on log shipper implementation
 	// this can lead to an immediate shippment or a shiiper can queue messages
 	// to deliver them in a batch.
-	send(string)
+	Send(string)
 
 	// Flush clear internal buffer.
 	// Depending on the logger this can include writing to a remote destination.
-	flush()
+	Flush()
 }
 
 // LogFormatter will convert passed log values into a suitable log message.
+// Exported for the same reason as LogShipper.
 type LogFormatter interface {
 
 	// Format create a log message from given values.
-	format(LogLevel, LogContext, string) string
-}
-
-// httpClient is an interface for a HTTP client.
-type httpClient interface {
-
-	// Do will send a http request.
-	Do(req *http.Request) (*http.Response, error)
+	Format(LogLevel, LogContext, string) string
 }

@@ -29,7 +29,7 @@ func (logger *LogHandler) logf(logLevel LogLevel, message string, v ...interface
 func (logger *LogHandler) log(logLevel LogLevel, v ...interface{}) {
 
 	if logger.logLevel >= logLevel {
-		logger.shipper.send(logger.formatter.format(logLevel, logger.context, fmt.Sprint(v...)))
+		logger.shipper.Send(logger.formatter.Format(logLevel, logger.context, fmt.Sprint(v...)))
 	}
 }
 
@@ -110,5 +110,5 @@ func (logger *LogHandler) Log(logLevel LogLevel, v ...interface{}) {
 
 // Flush will force it's log shipper to deliver all remaining log messages.
 func (logger *LogHandler) Flush() {
-	logger.shipper.flush()
+	logger.shipper.Flush()
 }

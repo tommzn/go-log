@@ -1,7 +1,6 @@
 package log
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -22,20 +21,7 @@ func (suite *FomatterTestSuite) TestDefaultFormatter() {
 	context := suite.contextForTest()
 	message := "Test Message"
 	expextedLogMessage := "Error: Test Message, Context: namespace:FomatterTestSuite,timestamp:2021-05-30T12:08:47+02:00"
-	suite.Equal(expextedLogMessage, formatter.format(logLevel, context, message))
-}
-
-func (suite *FomatterTestSuite) TestLogzioJsonFormatter() {
-
-	formatter := newLogzioJsonFormatter()
-	logLevel := Error
-	context := suite.contextForTest()
-	message := "Test Message"
-
-	logMessage := formatter.format(logLevel, context, message)
-	suite.True(strings.Contains(logMessage, "Error"))
-	suite.True(strings.Contains(logMessage, "@timestamp"))
-	suite.True(strings.Contains(logMessage, message))
+	suite.Equal(expextedLogMessage, formatter.Format(logLevel, context, message))
 }
 
 func (suite *FomatterTestSuite) contextForTest() LogContext {
