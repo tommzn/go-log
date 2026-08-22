@@ -140,8 +140,16 @@ type Shipper struct {
 	secretsManager secrets.SecretsManager
 }
 
-// NewShipper returns a new Shipper, configured from conf.
+// NewShipper returns a new Shipper, configured from conf. If secretsManager
+// is nil, a default secrets.NewSecretsManager() (environment-variable-backed)
+// is used instead - shipping a message calls secretsManager.Obtain to get the
+// Logz.io token, which would otherwise panic on first shipment rather than
+// failing fast at construction time.
 func NewShipper(conf config.Config, secretsManager secrets.SecretsManager) golog.LogShipper {
+
+	if secretsManager == nil {
+		secretsManager = secrets.NewSecretsManager()
+	}
 
 	logzioUrl := conf.Get("log.logzio.url", config.AsStringPtr(LOGZIO_URL))
 	batchSize := conf.GetAsInt("log.logzio.batchsize", config.AsIntPtr(LOGZIO_BATCH_SIZE))

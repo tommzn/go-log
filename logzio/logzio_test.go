@@ -42,6 +42,26 @@ func (suite *LogzioShipperTestSuite) TestCreateShipperFromConfig() {
 	suite.Equal(14*time.Second, logzioShipper.messageReadTimeout)
 }
 
+// TestNewShipperDefaultsNilSecretsManager is a regression test flagged in
+// review: NewShipper used to store a nil secretsManager as-is, which then
+// panicked on first shipment attempt (logzIoUrl calls secretsManager.Obtain).
+// NewLoggerFromConfig accepts a nil secrets manager (core tests pass nil for
+// the stdout case), so this is reachable in normal use, not just a
+// theoretical concern.
+func (suite *LogzioShipperTestSuite) TestNewShipperDefaultsNilSecretsManager() {
+
+	conf := loadConfigFromFile("config/logzio.yml")
+
+	shipper := NewShipper(conf, nil)
+	logzioShipper, ok := shipper.(*Shipper)
+	suite.True(ok)
+	suite.NotNil(logzioShipper.secretsManager)
+
+	suite.NotPanics(func() {
+		logzioShipper.logzIoUrl()
+	})
+}
+
 func (suite *LogzioShipperTestSuite) TestLogWithoutShipment() {
 
 	shipper := suite.shipperForTest()

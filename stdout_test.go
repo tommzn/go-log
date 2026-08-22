@@ -42,7 +42,7 @@ func (suite *StdoutShipperTestSuite) TestShipper() {
 	out := <-outC
 	suite.Equal(logMessage+"\n", out)
 
-	// FLuah will have no effect, but should not throw any errors.
+	// Flush will have no effect, but should not throw any errors.
 	shipper.Flush()
 	os.Stdout = orig_out
 }

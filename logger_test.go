@@ -101,7 +101,7 @@ func (suite *LoggerTestSuite) TestLoggingWithContext() {
 	logger.Error("This ", "is ", "a ", "test.")
 	suite.assertLogMessage(expectedNumberOfLogMessages, "Error: This is a test., Context: Key1:Value1,Key2:Value2", shipper)
 
-	// FLuah will have no effect, but should not throw any errors.
+	// Flush will have no effect, but should not throw any errors.
 	logger.Flush()
 }
 

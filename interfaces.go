@@ -4,7 +4,7 @@ import (
 	"context"
 )
 
-// Logger is an infterface for different types of logger.
+// Logger is an interface for different types of logger.
 type Logger interface {
 
 	// WithContext returns a new Logger with the log context from the given
@@ -50,7 +50,7 @@ type Logger interface {
 	// Logs passed message with given log level.
 	Log(logLevel LogLevel, v ...interface{})
 
-	// FLush tells the log shipper to cleat it's internal message queue.
+	// Flush tells the log shipper to clear its internal message queue.
 	Flush()
 }
 
@@ -61,7 +61,7 @@ type Logger interface {
 type LogShipper interface {
 
 	// Send will process given message. Depending on log shipper implementation
-	// this can lead to an immediate shippment or a shiiper can queue messages
+	// this can lead to an immediate shipment or a shipper can queue messages
 	// to deliver them in a batch.
 	Send(string)
 
@@ -74,6 +74,6 @@ type LogShipper interface {
 // Exported for the same reason as LogShipper.
 type LogFormatter interface {
 
-	// Format create a log message from given values.
+	// Format creates a log message from given values.
 	Format(LogLevel, LogContext, string) string
 }
