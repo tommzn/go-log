@@ -1,7 +1,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/tommzn/go-log/v2.svg)](https://pkg.go.dev/github.com/tommzn/go-log/v2)
 ![GitHub go.mod Go version](https://img.shields.io/github/go-mod/go-version/tommzn/go-log)
 ![GitHub tag (latest SemVer)](https://img.shields.io/github/v/tag/tommzn/go-log)
-[![Go Report Card](https://goreportcard.com/badge/github.com/tommzn/go-log)](https://goreportcard.com/report/github.com/tommzn/go-log)
+[![Go Report Card](https://goreportcard.com/badge/github.com/tommzn/go-log/v2)](https://goreportcard.com/report/github.com/tommzn/go-log/v2)
 
 # go-log
 

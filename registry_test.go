@@ -1,6 +1,7 @@
 package log
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -19,7 +20,11 @@ func TestRegistryTestSuite(t *testing.T) {
 
 func (suite *RegistryTestSuite) TestRegisterShipperAndResolve() {
 
-	defer delete(shipperFactories, "custom-test-shipper")
+	defer func() {
+		shipperRegistry.mu.Lock()
+		delete(shipperRegistry.factories, "custom-test-shipper")
+		shipperRegistry.mu.Unlock()
+	}()
 
 	registeredFormatter := newDefaultFormatter()
 	registeredShipper := newStdoutShipper()
@@ -56,4 +61,35 @@ func (suite *RegistryTestSuite) TestResolveFallsBackToStdoutWhenUnset() {
 	formatter, shipper := resolveShipperFromConfig(loaded, nil)
 	suite.IsType(&DefaultFormatter{}, formatter)
 	suite.IsType(&StdoutShipper{}, shipper)
+}
+
+// TestConcurrentRegisterAndResolve is a regression test for a data race
+// flagged in review: RegisterShipper (write) and resolveShipperFromConfig
+// (read) on shipperRegistry.factories with no synchronization. Run with
+// -race; nothing here is meaningful without it.
+func (suite *RegistryTestSuite) TestConcurrentRegisterAndResolve() {
+
+	conf := config.NewStaticConfigSource("log:\n  shipper: concurrent-test-shipper\n")
+	loaded, err := conf.Load()
+	suite.NoError(err)
+
+	var wg sync.WaitGroup
+	for i := 0; i < 50; i++ {
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			RegisterShipper("concurrent-test-shipper", func(conf config.Config, secretsManager secrets.SecretsManager) (LogFormatter, LogShipper) {
+				return newDefaultFormatter(), newStdoutShipper()
+			})
+		}()
+		go func() {
+			defer wg.Done()
+			resolveShipperFromConfig(loaded, nil)
+		}()
+	}
+	wg.Wait()
+
+	shipperRegistry.mu.Lock()
+	delete(shipperRegistry.factories, "concurrent-test-shipper")
+	shipperRegistry.mu.Unlock()
 }

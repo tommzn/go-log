@@ -2,6 +2,7 @@ package log
 
 import (
 	"strings"
+	"sync"
 
 	config "github.com/tommzn/go-config"
 	secrets "github.com/tommzn/go-secrets"
@@ -11,9 +12,15 @@ import (
 // secrets manager. See RegisterShipper.
 type ShipperFactory func(conf config.Config, secretsManager secrets.SecretsManager) (LogFormatter, LogShipper)
 
-// shipperFactories holds shippers registered via RegisterShipper, keyed by
-// lowercased name.
-var shipperFactories = map[string]ShipperFactory{}
+// shipperRegistry holds shippers registered via RegisterShipper, keyed by
+// lowercased name. Guarded by a mutex since RegisterShipper isn't guaranteed
+// to only ever run from an init() function (single-threaded, before main) -
+// nothing stops a consumer from calling it later, concurrently with
+// NewLoggerFromConfig/resolveShipperFromConfig reading it.
+var shipperRegistry = struct {
+	mu        sync.RWMutex
+	factories map[string]ShipperFactory
+}{factories: map[string]ShipperFactory{}}
 
 // RegisterShipper registers a shipper factory under the given name, so
 // NewLoggerFromConfig can select it via the "log.shipper" config value.
@@ -27,10 +34,12 @@ var shipperFactories = map[string]ShipperFactory{}
 //	import _ "github.com/tommzn/go-log/v2/logzio"
 //
 // If "log.shipper" names a shipper that hasn't been registered this way -
-// including built-in ones like "logzio" - NewLoggerFromConfig falls back to
-// StdoutShipper/DefaultFormatter, same as if "log.shipper" were unset.
+// e.g. "logzio" without that blank import - NewLoggerFromConfig falls back
+// to StdoutShipper/DefaultFormatter, same as if "log.shipper" were unset.
 func RegisterShipper(name string, factory ShipperFactory) {
-	shipperFactories[strings.ToLower(name)] = factory
+	shipperRegistry.mu.Lock()
+	defer shipperRegistry.mu.Unlock()
+	shipperRegistry.factories[strings.ToLower(name)] = factory
 }
 
 // resolveShipperFromConfig picks a formatter/shipper pair based on the
@@ -39,7 +48,10 @@ func RegisterShipper(name string, factory ShipperFactory) {
 func resolveShipperFromConfig(conf config.Config, secretsManager secrets.SecretsManager) (LogFormatter, LogShipper) {
 
 	if shipperType := conf.Get("log.shipper", nil); shipperType != nil {
-		if factory, ok := shipperFactories[strings.ToLower(*shipperType)]; ok {
+		shipperRegistry.mu.RLock()
+		factory, ok := shipperRegistry.factories[strings.ToLower(*shipperType)]
+		shipperRegistry.mu.RUnlock()
+		if ok {
 			return factory(conf, secretsManager)
 		}
 	}
