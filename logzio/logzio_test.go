@@ -168,7 +168,7 @@ func (suite *LogzioShipperTestSuite) TestShipmentWithRequestError() {
 	suite.Equal(1, shipper.httpClient.(*testClient).requestCount())
 }
 
-func (suite *LogzioShipperTestSuite) TestFlusgMessages() {
+func (suite *LogzioShipperTestSuite) TestFlushMessages() {
 
 	shipper := suite.shipperForTest()
 	logMessage := "Debug: Log Message"
