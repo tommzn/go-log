@@ -130,12 +130,12 @@ func (suite *ContextTestSuite) TestLogContextValuesReturnsClone() {
 
 	logContext := NewLogContext(map[string]string{"foo": "bar"})
 
-	copy := logContext.Values()
-	suite.Equal("bar", copy["foo"])
+	valuesCopy := logContext.Values()
+	suite.Equal("bar", valuesCopy["foo"])
 
 	// Mutating the returned map must not affect the stored context.
-	copy["foo"] = "changed"
-	copy["extra"] = "value"
+	valuesCopy["foo"] = "changed"
+	valuesCopy["extra"] = "value"
 	suite.Equal("bar", logContext.values["foo"])
 	_, ok := logContext.values["extra"]
 	suite.False(ok)
