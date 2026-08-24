@@ -16,6 +16,7 @@ func WithNameSpace(logger Logger, namespace string) Logger {
 // WithK8sContext returns a new Logger with kubernetes values from environment variables
 // appended as context. The passed logger is left unchanged.
 // At the moment following environment variables are supported:
+//
 //	K8S_NODE_NAME 	- Node name
 //	K8S_POD_NAME	- Pod name
 func WithK8sContext(logger Logger) Logger {
