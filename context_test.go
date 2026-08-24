@@ -111,6 +111,45 @@ func (suite *ContextTestSuite) TestDefaultContextForK8s() {
 	suite.True(ok2)
 }
 
+func (suite *ContextTestSuite) TestNewLogContextClonesInput() {
+
+	original := map[string]string{"foo": "bar"}
+	logContext := NewLogContext(original)
+	suite.Equal("bar", logContext.values["foo"])
+
+	// Mutating the caller-supplied map must not change the stored context.
+	original["foo"] = "changed"
+	suite.Equal("bar", logContext.values["foo"])
+
+	// nil input is safe to pass and produces an empty (nil-cloned) context.
+	empty := NewLogContext(nil)
+	suite.Nil(empty.values)
+}
+
+func (suite *ContextTestSuite) TestLogContextValuesReturnsClone() {
+
+	logContext := NewLogContext(map[string]string{"foo": "bar"})
+
+	copy := logContext.Values()
+	suite.Equal("bar", copy["foo"])
+
+	// Mutating the returned map must not affect the stored context.
+	copy["foo"] = "changed"
+	copy["extra"] = "value"
+	suite.Equal("bar", logContext.values["foo"])
+	_, ok := logContext.values["extra"]
+	suite.False(ok)
+}
+
+func (suite *ContextTestSuite) TestAppendValuesOnZeroContext() {
+
+	// A zero LogContext has a nil values map; AppendValues must still work
+	// (this exercises the merged == nil branch that was previously uncovered).
+	var zero LogContext
+	merged := zero.AppendValues(map[string]string{"a": "b"})
+	suite.Equal("b", merged.values["a"])
+}
+
 func (suite *ContextTestSuite) contextValuesForTest() map[string]string {
 
 	values := make(map[string]string)
