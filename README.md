@@ -174,7 +174,10 @@ log:
     messagestacksize: 500                 # internal buffer size, default: 500
     shipmenttimeout: 1                    # worker acquire timeout in seconds, default: 1s
     messagereadtimeout: 50ms             # batch read timeout, default: 50ms
+    timeout: 10                            # per-request HTTP client timeout in seconds, default: 10s
 ```
+
+`timeout` bounds a single request to Logz.io (connection, TLS handshake, request write and response read combined). Without it, a hung request would block its shipment worker forever - with only `shipmentstacksize` workers (2 by default), that few hangs are enough to jam the shipper permanently, silently dropping every log from then on.
 
 `log.shipper: logzio` only takes effect if the `logzio` subpackage has been activated with a blank import - `NewLoggerFromConfig` doesn't know about it otherwise, and falls back to stdout:
 
