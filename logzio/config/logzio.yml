@@ -8,3 +8,4 @@ log:
     messagestacksize: 123
     shipmenttimeout: 7
     messagereadtimeout: 14
+    timeout: 9

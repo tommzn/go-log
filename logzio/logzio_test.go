@@ -40,6 +40,32 @@ func (suite *LogzioShipperTestSuite) TestCreateShipperFromConfig() {
 	suite.True(cap(logzioShipper.messageStack) == 123)
 	suite.Equal(7*time.Second, logzioShipper.obtainShipmentTimeout)
 	suite.Equal(14*time.Second, logzioShipper.messageReadTimeout)
+
+	httpClient, ok := logzioShipper.httpClient.(*http.Client)
+	suite.True(ok)
+	suite.Equal(9*time.Second, httpClient.Timeout)
+}
+
+// TestNewShipperDefaultsHttpClientTimeout guards the actual fix for a shipper
+// that could jam forever and silently drop every future log: NewShipper used
+// to hand its Send/Flush goroutines a plain &http.Client{}, which has no
+// deadline at all - one hung request (network hiccup, stalled TLS handshake)
+// blocks that goroutine permanently, holding one of only shipmentstacksize
+// slots. Two such hangs exhaust the default of 2, and every future
+// obtainShipment call times out and silently returns, with nothing ever
+// logged about it. A bounded default client timeout guarantees Do() always
+// returns, so a slot is always eventually released.
+func (suite *LogzioShipperTestSuite) TestNewShipperDefaultsHttpClientTimeout() {
+
+	conf := loadConfigFromFile("config/testconfig.yml") // no "timeout" key set - exercises the default
+	shipper := NewShipper(conf, suite.secretsManagerForTest())
+	logzioShipper, ok := shipper.(*Shipper)
+	suite.True(ok)
+
+	httpClient, ok := logzioShipper.httpClient.(*http.Client)
+	suite.True(ok)
+	suite.Equal(HTTP_CLIENT_TIMEOUT, httpClient.Timeout)
+	suite.NotZero(httpClient.Timeout)
 }
 
 // TestNewShipperDefaultsNilSecretsManager is a regression test flagged in

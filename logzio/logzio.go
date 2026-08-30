@@ -63,6 +63,18 @@ const SHIPMENT_WAIT_TIMEOUT = 1 * time.Second
 // Can be set by config: log.logzio.messagereadtimeout
 const MESSAGE_READ_TIMEOUT = 50 * time.Millisecond
 
+// HTTP_CLIENT_TIMEOUT bounds a single Logz.io request (connection, TLS
+// handshake, request write and response read combined). Without this, the
+// default http.Client has no deadline at all: a single request that hangs
+// (a network hiccup, a stalled TLS handshake, Logz.io itself being slow)
+// blocks its goroutine forever, permanently holding one of shipmentStack's
+// slots. Two hangs on two shipments is enough to exhaust shipmentstacksize
+// (2 by default) and jam the shipper for good - every future Send/Flush
+// call then times out in obtainShipment and silently drops, with no error
+// ever logged, since obtainShipment's failure path isn't itself an error.
+// Can be set by config: log.logzio.timeout
+const HTTP_CLIENT_TIMEOUT = 10 * time.Second
+
 // init registers this shipper with go-log's config-driven dispatch, so
 // log.NewLoggerFromConfig picks it up for "log.shipper: logzio" once this
 // package has been blank-imported.
@@ -157,6 +169,7 @@ func NewShipper(conf config.Config, secretsManager secrets.SecretsManager) golog
 	messageStackSize := conf.GetAsInt("log.logzio.messagestacksize", config.AsIntPtr(MESSAGE_STACK_SIZE))
 	shipmentTimeout := conf.GetAsDuration("log.logzio.shipmenttimeout", config.AsDurationPtr(SHIPMENT_WAIT_TIMEOUT))
 	messageReadTimeout := conf.GetAsDuration("log.logzio.messagereadtimeout", config.AsDurationPtr(MESSAGE_READ_TIMEOUT))
+	httpTimeout := conf.GetAsDuration("log.logzio.timeout", config.AsDurationPtr(HTTP_CLIENT_TIMEOUT))
 
 	shipper := &Shipper{
 		logzioUrl:             *logzioUrl,
@@ -165,7 +178,7 @@ func NewShipper(conf config.Config, secretsManager secrets.SecretsManager) golog
 		messageStack:          make(chan string, *messageStackSize),
 		obtainShipmentTimeout: *shipmentTimeout,
 		messageReadTimeout:    *messageReadTimeout,
-		httpClient:            &http.Client{},
+		httpClient:            &http.Client{Timeout: *httpTimeout},
 		secretsManager:        secretsManager,
 	}
 	shipper.initShipmentStack()
