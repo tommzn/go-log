@@ -282,7 +282,7 @@ func (shipper *Shipper) shipMessages(wg *sync.WaitGroup, messages []string) {
 	defer wg.Done()
 
 	messageBatch := strings.Join(messages, "\n")
-	req, err := http.NewRequest("POST", shipper.logzIoUrl(), strings.NewReader(messageBatch))
+	req, err := http.NewRequest(http.MethodPost, shipper.logzIoUrl(), strings.NewReader(messageBatch))
 	if err != nil {
 		log.Println(err)
 		return
@@ -311,7 +311,7 @@ func (shipper *Shipper) sendRequest(request *http.Request) {
 				responseBody = string(bodyBytes)
 			}
 		}
-		log.Println(fmt.Errorf("Logz.io response, %d: %s", resp.StatusCode, responseBody))
+		log.Printf("Logz.io response, %d: %s\n", resp.StatusCode, responseBody)
 	}
 }
 
