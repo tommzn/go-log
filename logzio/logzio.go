@@ -314,6 +314,9 @@ func (shipper *Shipper) sendRequest(request *http.Request) {
 			}
 		}
 		log.Printf("Logz.io response, %d: %s\n", resp.StatusCode, responseBody)
+	} else if resp.Body != nil {
+		// Drain body to allow HTTP keep-alive connection reuse.
+		io.Copy(io.Discard, resp.Body) //nolint:errcheck
 	}
 }
 
