@@ -5,9 +5,9 @@ go 1.25.9
 require (
 	github.com/aws/aws-lambda-go v1.54.0
 	github.com/stretchr/testify v1.12.1
-	github.com/tommzn/go-config v1.6.1
-	github.com/tommzn/go-secrets v1.1.10
-	github.com/tommzn/go-utils v1.0.8
+	github.com/tommzn/go-config v1.6.2
+	github.com/tommzn/go-secrets v1.1.11
+	github.com/tommzn/go-utils v1.0.9
 )
 
 require (
