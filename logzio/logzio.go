@@ -303,10 +303,12 @@ func (shipper *Shipper) sendRequest(request *http.Request) {
 		log.Println("logz.io: received nil response")
 		return
 	}
+	if resp.Body != nil {
+		defer resp.Body.Close()
+	}
 	if resp.StatusCode >= 400 {
 		var responseBody string
 		if resp.Body != nil {
-			defer resp.Body.Close()
 			if bodyBytes, err := io.ReadAll(resp.Body); err == nil {
 				responseBody = string(bodyBytes)
 			}
