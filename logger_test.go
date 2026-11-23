@@ -345,8 +345,8 @@ func (suite *LoggerTestSuite) TestDefaultContextForNodes() {
 
 func (suite *LoggerTestSuite) TestDefaultContextForK8s() {
 
-	os.Setenv("TSL_K8S_NODE_NAME", "xxx")
-	os.Setenv("TSL_K8S_POD_NAME", "yyy")
+	suite.T().Setenv("TSL_K8S_NODE_NAME", "xxx")
+	suite.T().Setenv("TSL_K8S_POD_NAME", "yyy")
 	context := DefaultContextForK8s()
 	suite.Len(context, 2)
 }
