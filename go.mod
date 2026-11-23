@@ -1,12 +1,12 @@
 module github.com/tommzn/go-log/v2
 
-go 1.25.9
+go 1.26
 
 require (
-	github.com/aws/aws-lambda-go v1.54.0
+	github.com/aws/aws-lambda-go v1.55.1
 	github.com/stretchr/testify v1.12.1
-	github.com/tommzn/go-config v1.6.2
-	github.com/tommzn/go-secrets v1.1.11
+	github.com/tommzn/go-config v1.6.3
+	github.com/tommzn/go-secrets v1.1.12
 	github.com/tommzn/go-utils v1.0.9
 )
 
